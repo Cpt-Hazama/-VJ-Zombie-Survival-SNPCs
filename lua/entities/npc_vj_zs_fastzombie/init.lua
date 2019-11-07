@@ -49,6 +49,7 @@ function ENT:CustomOnInitialize()
 	local c = self.tbl_Collision
 	self:SetCollisionBounds(Vector(c.x,c.y,c.z),Vector(-c.x,-c.y,0))
 	self:CapabilitiesAdd(bit.bor(CAP_MOVE_JUMP))
+	self:CapabilitiesAdd(bit.bor(CAP_MOVE_CLIMB))
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
 end

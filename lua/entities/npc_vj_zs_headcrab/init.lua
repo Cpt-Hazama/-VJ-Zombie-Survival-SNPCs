@@ -45,6 +45,9 @@ ENT.SoundTbl_Death = {"npc/headcrab/die1.wav","npc/headcrab/die2.wav"}
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnInitialize()
 	self:SetCollisionBounds(Vector(8,10,15), Vector(-8,-10,0))
+	self:CapabilitiesAdd(bit.bor(CAP_MOVE_JUMP))
+	self:CapabilitiesAdd(bit.bor(CAP_USE))
+	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnLeapAttackVelocityCode()

@@ -126,14 +126,22 @@ hook.Add("PlayerDeath","VJ_ZS_ZombieAddition",function(ply)
 end)
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:PlayerSound(snd)
+	local tb = {}
 	for _,v in pairs(player.GetAll()) do
-		v:EmitSound(snd,0.2,100)
+		table.insert(tb,v)
+	end
+	for i = 1,#tb do
+		tb[i]:EmitSound(snd,0.2,100)
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:PlayerMsg(msg)
+	local tb = {}
 	for _,v in pairs(player.GetAll()) do
-		v:ChatPrint(msg)
+		table.insert(tb,v)
+	end
+	for i = 1,#tb do
+		tb[i]:ChatPrint(msg)
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -225,6 +233,9 @@ function ENT:SetIntermission(nextWave)
 		self:PlayerMsg(deaths.ply .. " - " ..deaths.value)
 		if time.ply != "N/A" then self:PlayerMsg("Longest Survival Time:") end
 		if time.ply != "N/A" then self:PlayerMsg(time.ply .. " - " ..time.value) end
+		for _,v in pairs(ents.FindByClass("npc_vj_zs_*")) do
+			v:TakeDamage(999999999,v,v)
+		end
 		self.StartedOnslaught = false
 		self:Remove()
 	end
