@@ -136,13 +136,14 @@ function ENT:PlayerSound(snd)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:PlayerMsg(msg)
-	local tb = {}
-	for _,v in pairs(player.GetAll()) do
-		table.insert(tb,v)
-	end
-	for i = 1,#tb do
-		tb[i]:ChatPrint(msg)
-	end
+	PrintMessage(HUD_PRINTTALK,msg)
+	-- local tb = {}
+	-- for _,v in pairs(player.GetAll()) do
+		-- table.insert(tb,v)
+	-- end
+	-- for i = 1,#tb do
+		-- tb[i]:ChatPrint(msg)
+	-- end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:GetSpawners()
