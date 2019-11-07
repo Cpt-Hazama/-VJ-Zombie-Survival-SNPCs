@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/cpthazama/zombiesurvival/poisonzombie/chemzombie_sheet"
+	"$bumpmap" "models/cpthazama/zombiesurvival/poisonzombie/PoisonZombie_sheet_normal"
+	"$model" "1"
+	"$phong" "1"
+	"$phongboost" "6"
+	"$phongexponenttexture" "Models/zombie_poison/poisonZombie_phong"			
+	"$phongfresnelranges"	"[0 .5  1]"
+	$emissiveBlendEnabled 1
+    $emissiveBlendTexture    "dev/null"
+    $emissiveBlendBaseTexture    "models/cpthazama/zombiesurvival/poisonzombie/chemzombie_glow"
+    $emissiveBlendFlowTexture    "dev/null"
+    $emissiveBlendTint "[0.3 0.35 0]"
+    $emissiveBlendStrength 1
+    $emissiveBlendScrollVector "[0 0]"
+}

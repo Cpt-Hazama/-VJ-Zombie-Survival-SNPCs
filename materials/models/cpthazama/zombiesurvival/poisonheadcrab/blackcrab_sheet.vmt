@@ -1,0 +1,25 @@
+"vertexlitgeneric"
+{
+	"$model" 1
+	"$baseTexture" "models/cpthazama/zombiesurvival/poisonheadcrab/Blackcrab_sheet"
+//	"$envmap" "env_cubemap"
+//	"$envmapcontrast" 1
+	"$bumpmap" "models/headcrab_black/blackcrab_sheet_normal"
+//	"$normalmapalphaenvmapmask" 1
+	"$phong"	"1"
+ 	"$phongexponent"	"12"
+	"$phongboost"	"2"
+	"$phongfresnelranges"   "[.2 .8 1]"
+
+	//rimlight parameters
+	"$rimlight" "1"
+	"$rimlightexponent" "8"
+	"$rimlightboost" ".5"
+	$emissiveBlendEnabled 1
+    $emissiveBlendTexture    "dev/null"
+    $emissiveBlendBaseTexture    "models/cpthazama/zombiesurvival/poisonheadcrab/blackcrab_sheet_glow"
+    $emissiveBlendFlowTexture    "dev/null"
+    $emissiveBlendTint "[0.5 0 0]"
+    $emissiveBlendStrength 1
+    $emissiveBlendScrollVector "[0 0]"
+}

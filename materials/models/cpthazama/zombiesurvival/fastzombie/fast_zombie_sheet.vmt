@@ -1,0 +1,20 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/cpthazama/zombiesurvival/fastzombie/fast_zombie_sheet"
+	"$alphatest" 1
+	"$bumpmap" "models/cpthazama/zombiesurvival/fastzombie/fast_zombie_sheet_normal"
+	"$surfaceprop" "flesh"
+	"$model" "1"
+	"$halflambert" "1"
+	"$phong" "1"
+	"$phongboost" "5"
+	"$phongexponent" 25									
+	"$phongfresnelranges"	"[.2 .6 1]"
+	$emissiveBlendEnabled 1
+    $emissiveBlendTexture    "dev/null"
+    $emissiveBlendBaseTexture    "models/cpthazama/zombiesurvival/fastzombie/fast_zombie_glow"
+    $emissiveBlendFlowTexture    "dev/null"
+    $emissiveBlendTint "[0.5 0 0]"
+    $emissiveBlendStrength 1
+    $emissiveBlendScrollVector "[0 0]"
+}

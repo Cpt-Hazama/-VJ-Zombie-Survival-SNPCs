@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	// Original shader: VertexLitMaskedEnvMappedTexture
+	"$basetexture" "models/cpthazama/zombiesurvival/wraithbeta/s_lowerlegfrontdull"
+	"$envmap" "models/cpthazama/zombiesurvival/wraithbeta/stalkerspec"
+	"$envmapmask" "models/cpthazama/zombiesurvival/wraithbeta/s_lowerlegfrontmask"
+	"$envmapsphere" 1
+	$emissiveBlendEnabled 1
+    $emissiveBlendTexture    "dev/null"
+    $emissiveBlendBaseTexture    "models/cpthazama/zombiesurvival/wraithbeta/s_lowerlegfrontdull_glow"
+    $emissiveBlendFlowTexture    "dev/null"
+    $emissiveBlendTint "[0.5 0 0]"
+    $emissiveBlendStrength 1
+    $emissiveBlendScrollVector "[0 0]"
+}
