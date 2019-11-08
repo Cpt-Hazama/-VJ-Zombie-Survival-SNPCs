@@ -44,8 +44,22 @@ if VJExists == true then
 	VJ.AddNPC("(BOSS) Tickle Monster","npc_vj_zs_ticklemonster",vCat)
 	
 	VJ.AddClientConVar("vj_zs_music_volume",50)
-	VJ.AddConVar("vj_zs_difficulty",1)
-	VJ.AddConVar("vj_zs_maxzombies",144) -- Doesn't mean this is the amount you will have on-screen
+	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
+	VJ.AddConVar("vj_zs_allowplayerzombies",0) -- Allow players to play as zombies
+	VJ.AddConVar("vj_zs_becomezombies",0) -- If the above is true, then players will become zombies on death
+	VJ.AddConVar("vj_zs_wavetime",180)
+	VJ.AddConVar("vj_zs_intermissiontime",45)
+	VJ.AddConVar("vj_zs_maxzombies",144) -- Max zombies that can be on screen at any time if they can even get this high
+	
+	hook.Add("EntityTakeDamage","VJ_ZS_PlayerSounds",function(ent,dmginfo)
+		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZHealth then
+			ent.NextZPainSoundT = ent.NextZPainSoundT or CurTime()
+			if CurTime() > ent.NextZPainSoundT then
+				ent:GetActiveWeapon():PainSound()
+				ent.NextZPainSoundT = CurTime() +math.Rand(1,3)
+			end
+		end
+	end)
 
 	local ENT = FindMetaTable("NPC")
 	function ENT:CreateZSBlood(count,dmginfo)

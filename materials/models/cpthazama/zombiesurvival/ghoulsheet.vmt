@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/cpthazama/zombiesurvival/ghoulsheet"
+	"$bumpmap" "models/cpthazama/zombiesurvival/zombie/zombie_classic_sheet_normal"
+	"$model" "1"
+	"$phong" "1"
+	"$phongboost" "5"								
+	"$phongfresnelranges"	"[0.1 .5  1]"
+	"$phongexponent" 30
+	$emissiveBlendEnabled 1
+    $emissiveBlendTexture    "dev/null"
+    $emissiveBlendBaseTexture    "models/cpthazama/zombiesurvival/zombie/Zombie_Classic_glow"
+    $emissiveBlendFlowTexture    "dev/null"
+    $emissiveBlendTint "[0.5 0 0]"
+    $emissiveBlendStrength 1
+    $emissiveBlendScrollVector "[0 0]"
+}
