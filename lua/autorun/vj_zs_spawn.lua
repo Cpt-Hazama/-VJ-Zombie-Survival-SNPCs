@@ -43,14 +43,6 @@ if VJExists == true then
 	VJ.AddNPC("(BOSS) Puke Puss","npc_vj_zs_pukepuss",vCat)
 	VJ.AddNPC("(BOSS) Tickle Monster","npc_vj_zs_ticklemonster",vCat)
 	
-	VJ.AddClientConVar("vj_zs_music_volume",50)
-	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
-	VJ.AddConVar("vj_zs_allowplayerzombies",0) -- Allow players to play as zombies
-	VJ.AddConVar("vj_zs_becomezombies",0) -- If the above is true, then players will become zombies on death
-	VJ.AddConVar("vj_zs_wavetime",180)
-	VJ.AddConVar("vj_zs_intermissiontime",45)
-	VJ.AddConVar("vj_zs_maxzombies",144) -- Max zombies that can be on screen at any time if they can even get this high
-	
 	hook.Add("EntityTakeDamage","VJ_ZS_PlayerSounds",function(ent,dmginfo)
 		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZHealth then
 			ent.NextZPainSoundT = ent.NextZPainSoundT or CurTime()
@@ -142,6 +134,43 @@ if VJExists == true then
 			halo.Add(tb,Color(0,150,255),4,4,3,true,true)
 			halo.Add(tbFri,Color(0,200,0),4,4,3,true,true)
 			halo.Add(tbFriPly,Color(200,0,200),4,4,3,true,true)
+		end)
+	end
+
+	VJ.AddClientConVar("vj_zs_music_volume",50)
+	VJ.AddClientConVar("vj_zs_musicset",1)
+	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
+	VJ.AddConVar("vj_zs_allowplayerzombies",0) -- Allow players to play as zombies
+	VJ.AddConVar("vj_zs_becomezombies",0) -- If the above is true, then players will become zombies on death
+	VJ.AddConVar("vj_zs_wavetime",180)
+	VJ.AddConVar("vj_zs_intermissiontime",45)
+	VJ.AddConVar("vj_zs_maxzombies",144) -- Max zombies that can be on screen at any time if they can even get this high
+
+	if CLIENT then
+		hook.Add("PopulateToolMenu", "VJ_ADDTOMENU_ZS", function()
+			spawnmenu.AddToolMenuOption("DrVrej", "SNPC Configures", "Zombie Survival", "Zombie Survival", "", "", function(Panel)
+				if !game.SinglePlayer() then
+				if !LocalPlayer():IsAdmin() or !LocalPlayer():IsSuperAdmin() then
+					Panel:AddControl( "Label", {Text = "You are not an admin!"})
+					Panel:AddControl("Slider", {Label = "Music Volume", Command = "vj_zs_music_volume", Type = "Float", Min = 0, Max = 100})
+					Panel:AddControl("Slider", { Label 	= "Music Set", Command = "vj_zs_musicset", Type = "Float", Min = 1, Max = 2})
+					Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST)")
+					Panel:ControlHelp("Notice: Only admins can change the main settings")
+					return
+					end
+				end
+
+				Panel:AddControl("Slider", {Label = "Music Volume", Command = "vj_zs_music_volume", Type = "Float", Min = 0, Max = 100})
+				Panel:AddControl("Slider", { Label 	= "Music Set", Command = "vj_zs_musicset", Type = "Float", Min = 1, Max = 2})
+				Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST)")
+				Panel:AddControl("Label", {Text = "Notice: The below settings are server/admin only"})
+				Panel:AddControl("Checkbox", {Label = "Allow Player Zombies?", Command = "vj_zs_allowplayerzombies"})
+				Panel:AddControl("Checkbox", {Label = "Become Zombies on Death?", Command = "vj_zs_becomezombies"})
+				Panel:AddControl("Slider", { Label 	= "Wave Time", Command = "vj_zs_wavetime", Type = "Float", Min = 5, Max = 720})
+				Panel:AddControl("Slider", { Label 	= "Intermission Time", Command = "vj_zs_intermissiontime", Type = "Float", Min = 5, Max = 120})
+				Panel:AddControl("Slider", { Label 	= "Difficulty (Influcenes Max Zombies)", Command = "vj_zs_difficulty", Type = "Float", Min = 1, Max = 100})
+				Panel:AddControl("Slider", { Label 	= "Max Zombies", Command = "vj_zs_maxzombies", Type = "Float", Min = 10, Max = 600})
+			end, {})
 		end)
 	end
 

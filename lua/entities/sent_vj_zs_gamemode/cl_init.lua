@@ -98,6 +98,8 @@ function ENT:Initialize()
 		v.ZS_TotalZombies = 0
 		v.ZS_NextBeatT = 0
 		v.ZS_NextCheckT = 0
+		v.ZS_TotalBeats = 0
+		v.ZS_BeatDir = nil
 		v.tbl_Beats = {}
 		self:SetUpBeats(v)
 	end
@@ -105,14 +107,26 @@ end
 
 function ENT:SetUpBeats(v)
 	local vol = GetConVarNumber("vj_zs_music_volume")
-	for i = 1,8 do
-		local ZS_Beat = CreateSound(v,"cpt_zs/music/zbeat" .. i .. ".wav")
+	local set = GetConVarNumber("vj_zs_musicset")
+	local max = 1
+	local dir = "common/"
+	if set == 1 then
+		max = 8
+		dir = "cpt_zs/music/zbeat"
+	elseif set == 2 then
+		max = 10
+		dir = "cpt_zs/music/gmod13/beat"
+	end
+	for i = 1,max do
+		local ZS_Beat = CreateSound(v,dir .. i .. ".wav")
 		ZS_Beat:SetSoundLevel(vol)
 		v.tbl_Beats[i] = ZS_Beat
 	end
+	v.ZS_TotalBeats = max
+	v.ZS_BeatDir = dir
 	local ZS_Beat = CreateSound(v,"cpt_zs/music/lasthuman.wav")
 	ZS_Beat:SetSoundLevel(vol)
-	v.tbl_Beats[9] = ZS_Beat
+	v.tbl_Beats[max +1] = ZS_Beat
 end
 
 function ENT:PlayBeat(v,i)
@@ -120,8 +134,8 @@ function ENT:PlayBeat(v,i)
 end
 
 function ENT:StopBeats(v)
-	for i = 1,9 do
-		v.tbl_Beats[i]:Stop()
+	for i = 1,v.ZS_TotalBeats +1 do
+		if v.tbl_Beats[i] then v.tbl_Beats[i]:Stop() end
 	end
 end
 
@@ -141,30 +155,40 @@ end
 function ENT:ZS_Music(ent)
 	local wave = self:GetNWInt("VJ_ZSWave")
 	local finalwave = self:GetNWInt("VJ_ZSWaveMax")
+	local isZombie = ent:GetNWBool("VJ_ZS_IsZombie")
 	if CurTime() > ent.ZS_NextCheckT then
 		local tbl = {}
-		for _,v in pairs(ents.FindByClass("npc_vj_zs_*")) do
-			if v:GetPos():Distance(ent:GetPos()) <= 400 then
-				table.insert(tbl,v)
+		if isZombie then
+			for _,v in pairs(ents.FindInSphere(ent:GetPos(),400)) do
+				if (v:IsNPC() && !string.find(v:GetClass(),"npc_vj_zs_")) or (v:IsPlayer() && v != ent && !v:GetNWBool("VJ_ZS_IsZombie")) then
+					table.insert(tbl,v)
+				end
+			end
+		else
+			for _,v in pairs(ents.FindByClass("npc_vj_zs_*")) do
+				if v:GetPos():Distance(ent:GetPos()) <= 400 then
+					table.insert(tbl,v)
+				end
 			end
 		end
 		ent.ZS_TotalZombies = #tbl
 		local count = math.Round((#tbl *0.65))
-		ent.ZS_CurrentBeat = math.Clamp(count,1,8)
+		ent.ZS_CurrentBeat = math.Clamp(count,1,ent.ZS_TotalBeats)
 		ent.ZS_NextCheckT = CurTime() +2
 	end
 	-- print(ent.ZS_TotalZombies,ent.ZS_CurrentBeat,ent.ZS_OldBeat,ent.ZS_NextBeatT)
+	print(wave,finalwave)
 	if wave == finalwave then
 		if CurTime() > self.CanStartThisShit then
 			if CurTime() > ent.ZS_NextBeatT then
 				self:StopBeats(ent)
-				self:PlayBeat(ent,9)
+				self:PlayBeat(ent,ent.ZS_TotalBeats +1)
 				ent.ZS_NextBeatT = CurTime() +SoundDuration("cpt_zs/music/lasthuman.wav")
 			end
 		end
 	else
 		if CurTime() > ent.ZS_NextBeatT then
-			local beat = "cpt_zs/music/zbeat" .. ent.ZS_CurrentBeat .. ".wav"
+			local beat = ent.ZS_BeatDir .. ent.ZS_CurrentBeat .. ".wav"
 			if ent.ZS_CurrentBeat != ent.ZS_OldBeat then
 				self:StopBeats(ent)
 				ent.ZS_OldBeat = ent.ZS_CurrentBeat

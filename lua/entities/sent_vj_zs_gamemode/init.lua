@@ -136,6 +136,8 @@ function ENT:Initialize()
 		v.ZS_SurviveTime = CurTime()
 		v.ZS_SurviveTimeOriginal = CurTime()
 	end
+	self.WaveTime = GetConVarNumber("vj_zs_wavetime")
+	self.IntermissionTime = GetConVarNumber("vj_zs_intermissiontime")
 	self.StartedOnslaught = false
 	self.NextWaveT = 0
 	self.InIntermission = false
