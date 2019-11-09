@@ -92,9 +92,19 @@ function SWEP:SecondaryAttack()
 		timer.Simple(0.6,function()
 			if IsValid(self) then
 				local grenent = ents.Create("npc_grenade_frag")
+				local att = self.Owner:GetAttachment(self.Owner:LookupAttachment("anim_attachment_LH"))
+				local pos = nil
+				local ang = nil
+				if att == nil then
+					pos = self.Owner:GetPos()
+					ang = self.Owner:GetAngles()
+				else
+					pos = att.Pos
+					ang = att.Ang
+				end
 				grenent:SetModel("models/Items/grenadeAmmo.mdl")
-				grenent:SetPos(self.Owner:GetAttachment(self.Owner:LookupAttachment("anim_attachment_LH")).Pos)
-				grenent:SetAngles(self.Owner:GetAttachment(self.Owner:LookupAttachment("anim_attachment_LH")).Ang)
+				grenent:SetPos(pos)
+				grenent:SetAngles(ang)
 				grenent:SetOwner(self.Owner)
 				grenent:SetParent(self.Owner)
 				grenent:Fire("SetParentAttachment","anim_attachment_LH")
@@ -176,7 +186,7 @@ function SWEP:CustomOnThink()
 		self.Owner:SetRunSpeed(self.ZSpeed)
 		self.Owner:SetWalkSpeed(self.ZSpeed)
 	end
-	self:GetOwner():SetModel(self.ZombieModel)
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
 		table.Empty(self.Owner.VJ_NPC_Class)
@@ -226,10 +236,10 @@ function SWEP:CustomOnDeploy()
 			-- end
 		-- end
 	-- end
-	timer.Simple(0.02,function()
+	timer.Simple(0.03,function()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
-			self.Owner:SetModel(self.ZombieModel)
+			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
 		end
 	end)
 end
@@ -252,6 +262,7 @@ function SWEP:ZRemove()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
+	self.Owner:AllowFlashlight(true)
 	if SERVER then
 		-- self:ZRemove()
 	end

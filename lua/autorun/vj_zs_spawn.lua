@@ -91,6 +91,59 @@ if VJExists == true then
 			end
 		end
 	end
+	
+	if CLIENT then
+		hook.Add("RenderScreenspaceEffects","VJ_ZS_ZombieFlashlight",function()
+			local ply = LocalPlayer()
+			if !ply:GetNWBool("VJ_ZS_IsZombie") then return end
+			local tab_infected = {
+				["$pp_colour_addr"] = 0.5,
+				["$pp_colour_addg"] = 0.4,
+				["$pp_colour_addb"] = 0.2,
+				["$pp_colour_brightness"] = -0.4,
+				["$pp_colour_contrast"] = 0.8,
+				["$pp_colour_colour"] = 1,
+				["$pp_colour_mulr"] = 1,
+				["$pp_colour_mulg"] = 0.2,
+				["$pp_colour_mulb"] = 0
+			}
+			DrawColorModify(tab_infected)
+			local light = DynamicLight(LocalPlayer():EntIndex())
+			if (light) then
+				light.Pos = LocalPlayer():GetPos() +Vector(0,0,20)
+				light.r = 255
+				light.g = 100
+				light.b = 100
+				light.Brightness = 0
+				light.Size = 450
+				light.Decay = 0
+				light.DieTime = CurTime() +0.2
+				light.Style = 0
+			end
+		end)
+
+		hook.Add("PreDrawHalos","VJ_ZS_ZombieVision",function()
+			local ply = LocalPlayer()
+			if !ply:GetNWBool("VJ_ZS_IsZombie") then return end
+			local tb = {}
+			local tbFri = {}
+			local tbFriPly = {}
+			for _,v in pairs(ents.GetAll()) do
+				if v:IsNPC() or v:IsPlayer() then
+					if v:IsNPC() && string.find(v:GetClass(),"npc_vj_zs") then
+						table.insert(tbFri,v)
+					elseif v:IsPlayer() && v:GetNWBool("VJ_ZS_IsZombie") then
+						table.insert(tbFriPly,v)
+					else
+						table.insert(tb,v)
+					end
+				end
+			end
+			halo.Add(tb,Color(0,150,255),4,4,3,true,true)
+			halo.Add(tbFri,Color(0,200,0),4,4,3,true,true)
+			halo.Add(tbFriPly,Color(200,0,200),4,4,3,true,true)
+		end)
+	end
 
 -- !!!!!! DON'T TOUCH ANYTHING BELOW THIS !!!!!! -------------------------------------------------------------------------------------------------------------------------
 	AddCSLuaFile(AutorunFile)

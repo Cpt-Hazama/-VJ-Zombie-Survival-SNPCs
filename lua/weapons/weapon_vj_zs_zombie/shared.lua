@@ -107,7 +107,7 @@ end
 function SWEP:CustomOnThink()
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
-	self:GetOwner():SetModel(self.ZombieModel)
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
 		table.Empty(self.Owner.VJ_NPC_Class)
@@ -150,10 +150,11 @@ function SWEP:CustomOnDeploy()
 			-- end
 		-- end
 	-- end
-	timer.Simple(0.02,function()
+	timer.Simple(0.03,function()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
-			self.Owner:SetModel(self.ZombieModel)
+			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			-- self.Owner:SetViewOffset(Vector(0,0,self.ViewOffset))
 		end
 	end)
 end
@@ -163,6 +164,7 @@ function SWEP:Equip() end
 function SWEP:ZRemove()
 	if SERVER then
 		local ply = self.Owner
+		ply:SetViewOffset(Vector(0,0,60))
 		ply.VJ_NPC_Class = nil
 		for _,v in pairs(ents.FindByClass("npc_vj_*")) do
 			if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
@@ -187,6 +189,7 @@ function SWEP:ZRemove()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
+	self.Owner:AllowFlashlight(true)
 	-- self:ZRemove()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------

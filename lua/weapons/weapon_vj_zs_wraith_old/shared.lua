@@ -1,24 +1,23 @@
 if (!file.Exists("autorun/vj_base_autorun.lua","LUA")) then return end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 	-- ZS Settings --
-SWEP.PrintName					= "Poison Zombie"
+SWEP.PrintName					= "Wraith"
 SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/poisonzombie.mdl"
-SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/poisonzombie.mdl"
-SWEP.ZHealth					= 500
-SWEP.ZSpeed						= 140
-SWEP.ViewModelFOV				= 40
+SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/wraith_beta.mdl"
+SWEP.ZHealth					= 175
+SWEP.ZSpeed						= 200
+SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
 SWEP.Damage 					= 20
-SWEP.DamageTime 				= 0.4
+SWEP.DamageTime 				= 0.6
 SWEP.PhysForce 					= 2
-local attackSpeed 				= 1
-local animDelay 				= 0.9
-SWEP.Primary.Sound				= {"npc/zombie_poison/pz_warn1.wav","npc/zombie_poison/pz_warn2.wav"}
-SWEP.MoanSound 					= {}
-SWEP.PainSounds 				= {"npc/zombie_poison/pz_pain1.wav","npc/zombie_poison/pz_pain2.wav","npc/zombie_poison/pz_pain3.wav"}
-SWEP.AnimTbl_PrimaryFire		= {ACT_VM_HITCENTER}
-SWEP.AnimTbl_Poison				= {ACT_VM_SECONDARYATTACK}
+local attackSpeed 				= 1.4
+local animDelay 				= 1.2
+SWEP.Primary.Sound				= {"cpt_zs/wraith/attack1.wav","cpt_zs/wraith/attack2.wav","cpt_zs/wraith/attack3.wav"}
+SWEP.MoanSound 					= {"cpt_zs/wraith/idle1.wav","cpt_zs/wraith/idle2.wav","cpt_zs/wraith/idle3.wav","cpt_zs/wraith/idle4.wav"}
+SWEP.PainSounds 				= {"cpt_zs/wraith/pain1.wav","cpt_zs/wraith/pain2.wav","cpt_zs/wraith/pain3.wav","cpt_zs/wraith/pain4.wav"}
+SWEP.AnimTbl_PrimaryFire		= {ACT_VM_HITCENTER,ACT_VM_SECONDARYATTACK}
 ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.Base 						= "weapon_vj_base"
 SWEP.WorldModel_Invisible		= true
@@ -56,48 +55,7 @@ SWEP.AnimTbl_Idle				= {ACT_VM_IDLE}
 SWEP.NextIdle_Deploy			= 0.5 -- How much time until it plays the idle animation after the weapon gets deployed
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:Reload()
-	self.NextMoanT = self.NextMoanT or CurTime()
-	if CurTime() > self.NextMoanT then
-		-- self:EmitSound("npc/zombie/zombie_voice_idle"..math.random(1,14)..".wav",80,100)
-		self.NextMoanT = CurTime() +5
-	end
-end
----------------------------------------------------------------------------------------------------------------------------------------------
-SWEP.NextRangeT = CurTime()
-function SWEP:SecondaryAttack()
-	if CurTime() > self.NextRangeT then
-		if (CLIENT) then return end
-		self:AttackAnim(self.AnimTbl_Poison)
-		self:EmitSound("npc/zombie_poison/pz_throw2.wav",75,100)
-		self.Owner:Freeze(true)
-		timer.Simple(0.6,function()
-			if IsValid(self) then
-				self.Owner:Freeze(false)
-				self.Owner:TakeDamage(50,self.Owner,self.Owner)
-				for i = 1,6 do
-					local spit = ents.Create("obj_vj_zs_flesh")
-					spit:SetPos(self.Owner:GetShootPos())
-					spit:SetAngles(self.Owner:GetAngles())
-					spit:Spawn()
-					spit:SetOwner(self.Owner)
-					spit:SetPhysicsAttacker(self.Owner)
-					local phys = spit:GetPhysicsObject()
-					if IsValid(phys) then
-						phys:Wake()
-						phys:SetVelocity(self:ThrowCode())
-					end
-				end
-			end
-		end)
-		timer.Simple(self.NextIdle_PrimaryAttack,function() if self:IsValid() then self:DoIdleAnimation() end end)
-		self.NextRangeT = CurTime() +5
-	end
-end
----------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:ThrowCode(TheProjectile)
-	self:EmitSound("physics/body/body_medium_break2.wav",75,100)
-	local b = math.random(2,3)
-	return ((self.Owner:GetPos() +self.Owner:GetForward() *200) -self.Owner:GetPos()) *1 +self.Owner:GetForward() *250 +self.Owner:GetUp() *150 +self.Owner:GetUp() *math.random(-b *35,b *35) +self.Owner:GetRight() *math.random(-b *50,b *50)
+	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnPrimaryAttack_BeforeShoot()
@@ -138,13 +96,51 @@ function SWEP:CustomOnPrimaryAttack_BeforeShoot()
 	end)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:CustomOnThink()
-	if self.Owner:GetViewOffset().z != 52 then
-		self.Owner:SetViewOffset(Vector(0,0,52))
-		self.Owner:SetViewOffsetDucked(Vector(0,0,50))
+function SWEP:WraithDraw(trans,ent)
+	ent:SetRenderMode(RENDERMODE_TRANSADD)
+	ent:SetColor(Color(65,65,65,trans))
+	if ent:IsPlayer() then
+		if trans < 50 then
+			self.Owner.VJ_NoTarget = true
+			self.Owner:SetNoTarget(true)
+		else
+			self.Owner.VJ_NoTarget = false
+			self.Owner:SetNoTarget(false)
+		end
 	end
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnThink()
+	if SERVER then
+		self.NextMoanT = self.NextMoanT or CurTime()
+		if CurTime() > self.NextMoanT then
+			self:EmitSound(VJ_PICK(self.MoanSound),75,100)
+			self.NextMoanT = CurTime() +math.Rand(5,8)
+		end
+	end
+	self.Owner:DrawShadow(false)
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
+	if SERVER then
+		if CurTime() < self:GetNextPrimaryFire() then
+			self:WraithDraw(220,self.Owner)
+		elseif self.Owner:GetVelocity():Length() > 1 then
+			self:WraithDraw(50,self.Owner)
+		else
+			self:WraithDraw(1,self.Owner)
+		end
+	else
+		if IsValid(self:GetOwner():GetViewModel()) then
+			local vm = self:GetOwner():GetViewModel()
+			if CurTime() < self:GetNextPrimaryFire() then
+				self:WraithDraw(220,vm)
+			elseif self.Owner:GetVelocity():Length() > 1 then
+				self:WraithDraw(50,vm)
+			else
+				self:WraithDraw(1,vm)
+			end
+		end
+	end
 	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
@@ -153,8 +149,8 @@ function SWEP:CustomOnThink()
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:AttackAnim(tbl)
-	self:SendWeaponAnim(VJ_PICK(tbl))
+function SWEP:CustomOnPrimaryAttack_AfterShoot()
+	self:SendWeaponAnim(VJ_PICK(self.AnimTbl_PrimaryFire))
 	if IsValid(self:GetOwner():GetViewModel()) then
 		local vm = self:GetOwner():GetViewModel()
 		vm:SetPlaybackRate(attackSpeed)
@@ -164,10 +160,6 @@ function SWEP:AttackAnim(tbl)
 			end
 		end)
 	end
-end
----------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:CustomOnPrimaryAttack_AfterShoot()
-	self:AttackAnim(self.AnimTbl_PrimaryFire)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:PainSound()
@@ -195,8 +187,6 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
-			self.Owner:SetViewOffset(Vector(0,0,52))
-			self.Owner:SetViewOffsetDucked(Vector(0,0,50))
 		end
 	end)
 end
@@ -206,7 +196,6 @@ function SWEP:Equip() end
 function SWEP:ZRemove()
 	if SERVER then
 		local ply = self.Owner
-		self.Owner:Freeze(false)
 		ply.VJ_NPC_Class = nil
 		for _,v in pairs(ents.FindByClass("npc_vj_*")) do
 			if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
@@ -232,10 +221,19 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
 	self.Owner:AllowFlashlight(true)
-	self.Owner:SetViewOffset(Vector(0,0,60))
-	self.Owner:SetViewOffsetDucked(Vector(0,0,28))
 	if SERVER then
+		self.Owner:DrawShadow(true)
+		self.Owner.VJ_NoTarget = false
+		self.Owner:SetNoTarget(false)
+		self.Owner:SetRenderMode(RENDERMODE_NORMAL)
+		self.Owner:SetColor(Color(255,255,255,255))
 		-- self:ZRemove()
+	else
+		if IsValid(self:GetOwner():GetViewModel()) then
+			local vm = self:GetOwner():GetViewModel()
+			vm:SetRenderMode(RENDERMODE_NORMAL)
+			vm:SetColor(Color(255,255,255,255))
+		end
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -244,4 +242,13 @@ function SWEP:Holster(wep)
 		-- self:ZRemove()
 	end
 	return false
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:ViewModelDrawn()
+	render.ModelMaterialOverride(0)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+local matSheet = Material("models/cpthazama/zombiesurvival/wraithbeta/s_chest2dull")
+function SWEP:PreDrawViewModel(vm)
+	render.ModelMaterialOverride(matSheet)
 end

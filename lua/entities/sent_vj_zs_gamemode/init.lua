@@ -56,25 +56,30 @@ ENT.PlayerZombieThresholds = {
 	},
 	[2] = {
 		"weapon_vj_zs_ghoul",
+		"weapon_vj_zs_zombietorso",
+		"weapon_vj_zs_headcrab",
 	},
 	[3] = {
 		"weapon_vj_zs_fastzombie",
+		"weapon_vj_zs_fastheadcrab",
+		"weapon_vj_zs_wraith_old",
 	},
 	[4] = {
-		nil
+		"weapon_vj_zs_mailedzombie",
 	},
 	[5] = {
-		nil
+		"weapon_vj_zs_wraith",
+		"weapon_vj_zs_wraithcrab"
 	},
 	[6] = {
-		nil
+		"weapon_vj_zs_poisonheadcrab"
 	},
 	[7] = {
 		"weapon_vj_zs_poisonzombie",
 		"weapon_vj_zs_zombine",
 	},
 	[8] = {
-		nil
+		"weapon_vj_zs_chemzombie",
 	}
 }
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,8 +140,10 @@ function ENT:Initialize()
 	self.NextWaveT = 0
 	self.InIntermission = false
 	self.ZombieAdditions = 0
+	self.TotalDeaths = 0
 	self.NextSpawnZTime = 0
 	self.StarterTimer = CurTime() +self.IntermissionTime
+	self.tbl_TotalPlayers = {}
 	self.Zombies = {}
 	self.ZombieClasses = {}
 	self.PlayerZombies = {}
@@ -151,13 +158,16 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 hook.Add("PlayerDeath","VJ_ZS_ZombieAddition",function(ply)
 	local canRun = false
+	local ent = NULL
 	for _,v in pairs(ents.FindByClass("sent_vj_zs_gamemode")) do
 		-- v.ZombieAdditions = v.ZombieAdditions +1
+		ent = v
 		canRun = true
 	end
 	if !canRun then
 		if ply.VJ_ZS_IsZombie then
 			ply.VJ_ZS_IsZombie = false
+			ply:SetNWBool("VJ_ZS_IsZombie",false)
 			ply.VJ_NPC_Class = nil
 			for _,v in pairs(ents.FindByClass("npc_vj_*")) do
 				if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
@@ -169,12 +179,15 @@ hook.Add("PlayerDeath","VJ_ZS_ZombieAddition",function(ply)
 					table.insert(v.VJ_AddCertainEntityAsFriendly,ply)
 				end
 			end
+		else
+			if ent.TotalDeaths then ent.TotalDeaths = ent.TotalDeaths +1 end
 		end
 		return
 	end
 	ply.ZS_Deaths = ply.ZS_Deaths +1
 	if GetConVarNumber("vj_zs_allowplayerzombies") == 1 && GetConVarNumber("vj_zs_becomezombies") == 1 then
 		ply.VJ_ZS_IsZombie = true
+		ply:SetNWBool("VJ_ZS_IsZombie",true)
 	end
 end)
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +222,7 @@ hook.Add("PlayerDeathThink","VJ_ZS_DisableZPlayerSpawning",function(ply)
 end)
 ---------------------------------------------------------------------------------------------------------------------------------------------
 hook.Add("PlayerSpawn","VJ_ZS_ZombiePlayers",function(ply)
-	if GetConVarNumber("vj_zs_allowplayerzombies") == 0 then ply.VJ_ZS_IsZombie = false return end
+	if GetConVarNumber("vj_zs_allowplayerzombies") == 0 then ply.VJ_ZS_IsZombie = false; ply:SetNWBool("VJ_ZS_IsZombie",false) return end
 	local canRun = false
 	local ent = NULL
 	for _,v in pairs(ents.FindByClass("sent_vj_zs_gamemode")) do
@@ -330,7 +343,7 @@ function ENT:SetIntermission(nextWave)
 	if self.InIntermission then return end
 	self.BossRound = false
 	if nextWave == self.TotalWaves +1 then
-		if self.ZombieAdditions < game.MaxPlayers() then
+		if self.TotalDeaths < game.MaxPlayers() then
 			self:PlayerSound("cpt_zs/music/humanwin.mp3")
 			self:PlayerMsg("The living have prevailed!")
 		else
@@ -374,6 +387,7 @@ function ENT:SetIntermission(nextWave)
 								if v:GetPos():Distance(self.DefaultSpawnPositions[i]) <= 150 then
 									v:Kill()
 									v.VJ_ZS_IsZombie = true
+									v:SetNWBool("VJ_ZS_IsZombie",true)
 								end
 							end
 						end
@@ -405,6 +419,10 @@ function ENT:SetWave(num)
 	self.Wave = num
 	if math.random(1,self.BossChance) == 1 then
 		self.BossRound = true
+	end
+	table.Empty(self.tbl_TotalPlayers)
+	for _,v in pairs(player.GetAll()) do
+		table.insert(self.tbl_TotalPlayers,v)
 	end
 	self:SetupZombies()
 	self.NextWaveT = CurTime() +self.WaveTime
@@ -464,16 +482,7 @@ function ENT:ZS_Think(wave)
 	end
 	if int then return end
 	local maxZombies = 1
-	local plTbl = {}
-	for _,v in pairs(player.GetAll()) do
-		-- if v.VJ_ZS_IsZombie then 
-			-- if !IsValid(v:GetActiveWeapon()) || IsValid(v:GetActiveWeapon()) && v:GetActiveWeapon():GetClass() != v.VJ_ZS_ZombieClass then
-				-- v:Give(v.VJ_ZS_ZombieClass)
-			-- end
-		-- end
-		table.insert(plTbl,v)
-	end
-	local numZ = (#plTbl *wave +self.ZombieAdditions +3) *GetConVarNumber("vj_zs_difficulty")
+	local numZ = (#self.tbl_TotalPlayers *wave /*+self.ZombieAdditions*/ +3) *GetConVarNumber("vj_zs_difficulty")
 	maxZombies = math.Clamp(numZ,1,GetConVarNumber("vj_zs_maxzombies"))
 	self:SpawnThink(wave,maxZombies)
 end
@@ -516,5 +525,10 @@ function ENT:OnRemove()
 	end
 	for _,v in pairs(player.GetAll()) do
 		v:SetNWBool("ZS_HUD",false)
+		v:SetNWBool("VJ_ZS_IsZombie",false)
+		if v.VJ_ZS_IsZombie then
+			v.VJ_ZS_IsZombie = false
+			v:Kill()
+		end
 	end
 end

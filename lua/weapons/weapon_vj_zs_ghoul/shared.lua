@@ -137,7 +137,7 @@ end
 function SWEP:CustomOnThink()
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
-	self:GetOwner():SetModel(self.ZombieModel)
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
 		table.Empty(self.Owner.VJ_NPC_Class)
@@ -183,10 +183,10 @@ function SWEP:CustomOnDeploy()
 			-- end
 		-- end
 	-- end
-	timer.Simple(0.02,function()
+	timer.Simple(0.03,function()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
-			self.Owner:SetModel(self.ZombieModel)
+			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
 		end
 	end)
 end
@@ -220,6 +220,7 @@ function SWEP:ZRemove()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
+	self.Owner:AllowFlashlight(true)
 	if SERVER then
 		-- self:ZRemove()
 	end

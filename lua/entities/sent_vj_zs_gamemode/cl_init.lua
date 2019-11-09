@@ -100,7 +100,6 @@ function ENT:Initialize()
 		v.ZS_NextCheckT = 0
 		v.tbl_Beats = {}
 		self:SetUpBeats(v)
-		-- v:SetNWBool("ZS_HUD",true)
 	end
 end
 
@@ -132,6 +131,9 @@ end
 
 function ENT:Think()
 	for _,v in pairs(player.GetAll()) do
+		if v.tbl_Beats == nil then
+			self:SetUpBeats(v)
+		end
 		self:ZS_Music(v)
 	end
 end

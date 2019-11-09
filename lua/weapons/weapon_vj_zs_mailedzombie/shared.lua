@@ -1,24 +1,23 @@
 if (!file.Exists("autorun/vj_base_autorun.lua","LUA")) then return end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 	-- ZS Settings --
-SWEP.PrintName					= "Poison Zombie"
-SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/poisonzombie.mdl"
-SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/poisonzombie.mdl"
-SWEP.ZHealth					= 500
-SWEP.ZSpeed						= 140
-SWEP.ViewModelFOV				= 40
+SWEP.PrintName					= "Mailed Zombie"
+SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/zombie.mdl"
+SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/ghoul.mdl"
+SWEP.ZHealth					= 250
+SWEP.ZSpeed						= 130
+SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
-SWEP.Damage 					= 20
-SWEP.DamageTime 				= 0.4
+SWEP.Damage 					= 15
+SWEP.DamageTime 				= 0.6
 SWEP.PhysForce 					= 2
-local attackSpeed 				= 1
-local animDelay 				= 0.9
-SWEP.Primary.Sound				= {"npc/zombie_poison/pz_warn1.wav","npc/zombie_poison/pz_warn2.wav"}
+local attackSpeed 				= 1.4
+local animDelay 				= 1.2
+SWEP.Primary.Sound				= {"npc/zombie/zo_attack1.wav","npc/zombie/zo_attack2.wav"}
 SWEP.MoanSound 					= {}
-SWEP.PainSounds 				= {"npc/zombie_poison/pz_pain1.wav","npc/zombie_poison/pz_pain2.wav","npc/zombie_poison/pz_pain3.wav"}
-SWEP.AnimTbl_PrimaryFire		= {ACT_VM_HITCENTER}
-SWEP.AnimTbl_Poison				= {ACT_VM_SECONDARYATTACK}
+SWEP.PainSounds 				= {"npc/zombie/zombie_pain1.wav","npc/zombie/zombie_pain2.wav","npc/zombie/zombie_pain3.wav","npc/zombie/zombie_pain4.wav","npc/zombie/zombie_pain5.wav","npc/zombie/zombie_pain6.wav"}
+SWEP.AnimTbl_PrimaryFire		= {ACT_VM_HITCENTER,ACT_VM_SECONDARYATTACK}
 ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.Base 						= "weapon_vj_base"
 SWEP.WorldModel_Invisible		= true
@@ -67,14 +66,11 @@ SWEP.NextRangeT = CurTime()
 function SWEP:SecondaryAttack()
 	if CurTime() > self.NextRangeT then
 		if (CLIENT) then return end
-		self:AttackAnim(self.AnimTbl_Poison)
-		self:EmitSound("npc/zombie_poison/pz_throw2.wav",75,100)
-		self.Owner:Freeze(true)
+		self:AttackAnim(self.AnimTbl_PrimaryFire)
+		self:EmitSound("npc/zombie/zo_attack2.wav",75,80)
 		timer.Simple(0.6,function()
 			if IsValid(self) then
-				self.Owner:Freeze(false)
-				self.Owner:TakeDamage(50,self.Owner,self.Owner)
-				for i = 1,6 do
+				for i = 1,3 do
 					local spit = ents.Create("obj_vj_zs_flesh")
 					spit:SetPos(self.Owner:GetShootPos())
 					spit:SetAngles(self.Owner:GetAngles())
@@ -139,10 +135,6 @@ function SWEP:CustomOnPrimaryAttack_BeforeShoot()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnThink()
-	if self.Owner:GetViewOffset().z != 52 then
-		self.Owner:SetViewOffset(Vector(0,0,52))
-		self.Owner:SetViewOffsetDucked(Vector(0,0,50))
-	end
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
 	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
@@ -195,8 +187,6 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
-			self.Owner:SetViewOffset(Vector(0,0,52))
-			self.Owner:SetViewOffsetDucked(Vector(0,0,50))
 		end
 	end)
 end
@@ -206,7 +196,6 @@ function SWEP:Equip() end
 function SWEP:ZRemove()
 	if SERVER then
 		local ply = self.Owner
-		self.Owner:Freeze(false)
 		ply.VJ_NPC_Class = nil
 		for _,v in pairs(ents.FindByClass("npc_vj_*")) do
 			if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
@@ -232,11 +221,18 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
 	self.Owner:AllowFlashlight(true)
-	self.Owner:SetViewOffset(Vector(0,0,60))
-	self.Owner:SetViewOffsetDucked(Vector(0,0,28))
 	if SERVER then
 		-- self:ZRemove()
 	end
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:ViewModelDrawn()
+	render.ModelMaterialOverride(0)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+local matSheet = Material("models/cpthazama/zombiesurvival/fastzombie/fast_zombie_sheet")
+function SWEP:PreDrawViewModel(vm)
+	render.ModelMaterialOverride(matSheet)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:Holster(wep)

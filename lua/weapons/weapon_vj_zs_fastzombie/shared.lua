@@ -67,7 +67,9 @@ function SWEP:SecondaryAttack()
 	if CurTime() > self.NextRangeT then
 		if (CLIENT) then return end
 		self.Owner:ViewPunch(Angle(8,0,0))
+		self.Owner:SetGroundEntity(NULL)
 		self.Owner:SetVelocity(self.Owner:GetForward() *950 +self.Owner:GetUp() *150)
+		self.Owner:Fire("IgnoreFallDamage","",0)
 		self:EmitSound("npc/fast_zombie/fz_scream1.wav",85,100)
 		self.NextRangeT = CurTime() +2
 	end
@@ -112,9 +114,13 @@ function SWEP:CustomOnPrimaryAttack_BeforeShoot()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnThink()
+	if self.Owner:GetViewOffset().z != 45 then
+		self.Owner:SetViewOffset(Vector(0,0,45))
+		self.Owner:SetViewOffsetDucked(Vector(0,0,40))
+	end
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
-	self:GetOwner():SetModel(self.ZombieModel)
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
 		table.Empty(self.Owner.VJ_NPC_Class)
@@ -156,10 +162,12 @@ function SWEP:CustomOnDeploy()
 			-- end
 		-- end
 	-- end
-	timer.Simple(0.02,function()
+	timer.Simple(0.03,function()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
-			self.Owner:SetModel(self.ZombieModel)
+			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			self.Owner:SetViewOffset(Vector(0,0,45))
+			self.Owner:SetViewOffsetDucked(Vector(0,0,40))
 		end
 	end)
 end
@@ -193,6 +201,9 @@ function SWEP:ZRemove()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
+	self.Owner:AllowFlashlight(true)
+	self.Owner:SetViewOffset(Vector(0,0,60))
+	self.Owner:SetViewOffsetDucked(Vector(0,0,28))
 	if SERVER then
 		-- self:ZRemove()
 	end
