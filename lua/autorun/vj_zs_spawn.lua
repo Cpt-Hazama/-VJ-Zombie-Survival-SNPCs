@@ -18,6 +18,10 @@ if VJExists == true then
 	VJ.AddNPC("Gamemode","sent_vj_zs_gamemode",vCat)
 	VJ.AddNPC("Zombie Gas","sent_vj_zs_spawner",vCat)
 
+	VJ.AddNPC("SMG Turret","npc_vj_hzs_turret",vCat)
+	VJ.AddNPC("Shotgun Turret","npc_vj_hzs_turret_shotguns",vCat)
+	VJ.AddNPC("Sniper Turret","npc_vj_hzs_turret_sniper",vCat)
+
 	local vCat = "Zombie Survival"
 	VJ.AddNPC("Zombie","npc_vj_zs_zombie",vCat)
 	VJ.AddNPC("Zombie Torso","npc_vj_zs_zombietorso",vCat)

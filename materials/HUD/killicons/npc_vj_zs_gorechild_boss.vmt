@@ -1,6 +1,6 @@
 "UnlitGeneric"
 {
-	"$basetexture" "HUD/killicons/npc_vj_zs_gigagorechild"
+	"$basetexture" "HUD/killicons/npc_vj_zs_gorechild_boss"
 	"$nolod" 1
 	"$nomip" 1
 	"$ignorez" 1
