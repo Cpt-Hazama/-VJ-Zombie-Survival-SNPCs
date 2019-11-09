@@ -177,7 +177,7 @@ function ENT:ZS_Music(ent)
 		ent.ZS_NextCheckT = CurTime() +2
 	end
 	-- print(ent.ZS_TotalZombies,ent.ZS_CurrentBeat,ent.ZS_OldBeat,ent.ZS_NextBeatT)
-	print(wave,finalwave)
+	-- print(wave,finalwave)
 	if wave == finalwave then
 		if CurTime() > self.CanStartThisShit then
 			if CurTime() > ent.ZS_NextBeatT then
