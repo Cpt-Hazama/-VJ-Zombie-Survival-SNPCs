@@ -402,7 +402,7 @@ function ENT:SetIntermission(nextWave)
 	for i = 1,5 do
 		timer.Simple(self.IntermissionTime -i,function()
 			if IsValid(self) then
-				self:PlayerSound("ambient/creatures/teddy.wav")
+				self:PlayerSound("buttons/lightswitch2.wav")
 				self:PlayerMsg(i .. "..")
 			end
 		end)
