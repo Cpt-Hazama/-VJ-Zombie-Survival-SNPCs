@@ -25,7 +25,7 @@ SWEP.Author 					= "Cpt. Hazama"
 SWEP.Contact					= "http://steamcommunity.com/groups/vrejgaming"
 SWEP.Purpose					= "This weapon is made for Players and NPCs"
 SWEP.Instructions				= "Controls are like a regular weapon."
-SWEP.Category					= "VJ Base - Zombie Survival"
+-- SWEP.Category					= "VJ Base - Zombie Survival"
 	-- Client Settings ---------------------------------------------------------------------------------------------------------------------------------------------
 if (CLIENT) then
 SWEP.Slot						= 1 -- Which weapon slot you want your SWEP to be in? (1 2 3 4 5 6) 
@@ -34,7 +34,7 @@ end
 	-- Main Settings ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.WorldModel					= "models/weapons/w_knife_t.mdl" 
 SWEP.HoldType 					= "knife"
-SWEP.Spawnable					= true
+SWEP.Spawnable					= false
 SWEP.AdminSpawnable				= false
 SWEP.Primary.ClipSize			= 30 -- Max amount of bullets per clip
 SWEP.Primary.TakeAmmo = 0

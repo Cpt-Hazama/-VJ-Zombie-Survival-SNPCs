@@ -82,6 +82,39 @@ ENT.PlayerZombieThresholds = {
 		"weapon_vj_zs_chemzombie",
 	}
 }
+ENT.PlayerWeapons = { -- Replace these with whatever you want, too lazy to make a bunch of ZS weapons on VJ Base
+	[0] = {"weapon_crowbar"},
+	[1] = {
+		"weapon_vj_9mmpistol",
+		"weapon_vj_zsh_glock",
+		"weapon_vj_zsh_p228",
+	},
+	[2] = {
+		"weapon_vj_357",
+		"weapon_vj_zsh_usp",
+	},
+	[3] = {
+		"weapon_vj_smg1",
+	},
+	[4] = {
+		"weapon_vj_ak47",
+		"weapon_vj_mp40",
+	},
+	[5] = {
+		"weapon_vj_glock17",
+		"weapon_vj_zsh_mp5",
+	},
+	[6] = {
+		"weapon_vj_zsh_deagle",
+		"weapon_vj_m16a1",
+	},
+	[7] = {
+		"weapon_vj_spas12",
+	},
+	[8] = {
+		"weapon_vj_blaster",
+	}
+}
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SetupZombies() -- Called when wave starts
 	local oldCount = #self.ZombieClasses
@@ -145,6 +178,7 @@ function ENT:Initialize()
 	self.TotalDeaths = 0
 	self.NextSpawnZTime = 0
 	self.StarterTimer = CurTime() +self.IntermissionTime
+	self.EnforceWeapons = tobool(GetConVarNumber("vj_zs_weapons"))
 	self.tbl_TotalPlayers = {}
 	self.Zombies = {}
 	self.ZombieClasses = {}
@@ -155,7 +189,33 @@ function ENT:Initialize()
 		["mostdeaths"] = {ply="N/A",value=0},
 		["longestsurvival"] = {ply="N/A",value=0},
 	}
+	if self.EnforceWeapons then
+		self:EnforceStarterWeapons()
+	end
 	self:SetNWInt("VJ_ZSWaveMax",self.TotalWaves)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:ObtainWaveWeapon(ent,wave)
+	local wep = VJ_PICK(self.PlayerWeapons[wave])
+	ent:Give(wep)
+	-- ent:EmitSound("weapons/physcannon/physcannon_charge.wav",45,100)
+	ent:ChatPrint("Unlocked new weapon!")
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:EnforceStarterWeapons()
+	local wave = self.Wave
+	for _,v in pairs(player.GetAll()) do
+		if v:Alive() && !v.VJ_ZS_IsZombie then
+			v:StripWeapons()
+			v:StripAmmo()
+			for i = 0,wave do
+				self:ObtainWaveWeapon(v,wave)
+			end
+			if math.random(1,2) == 1 then
+				ent:Give("weapon_vj_zsh_barricade")
+			end
+		end
+	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 hook.Add("PlayerDeath","VJ_ZS_ZombieAddition",function(ply)
@@ -224,36 +284,70 @@ hook.Add("PlayerDeathThink","VJ_ZS_DisableZPlayerSpawning",function(ply)
 end)
 ---------------------------------------------------------------------------------------------------------------------------------------------
 hook.Add("PlayerSpawn","VJ_ZS_ZombiePlayers",function(ply)
-	if GetConVarNumber("vj_zs_allowplayerzombies") == 0 then ply.VJ_ZS_IsZombie = false; ply:SetNWBool("VJ_ZS_IsZombie",false) return end
-	local canRun = false
-	local ent = NULL
-	for _,v in pairs(ents.FindByClass("sent_vj_zs_gamemode")) do
-		canRun = true
-		ent = v
-	end
-	if !canRun then return end
-	if ply.VJ_ZS_IsZombie then
-		timer.Simple(0.01,function()
-			ply:StripWeapons()
-			local wep = ent:PickPlayerClass()
-			ply.VJ_ZS_ZombieClass = wep
-			ply.VJ_CanBePickedUpWithOutUse = true
-			ply.VJ_CanBePickedUpWithOutUse_Class = wep
-			ply:Give(wep)
-			ply.VJ_NPC_Class = {}
-			table.insert(ply.VJ_NPC_Class,"CLASS_ZOMBIE")
-			ply:SelectWeapon(wep)
-			ply:SetPos(ent:GetRandomSpawn(80))
-			for _,v in pairs(ents.FindByClass("npc_vj_*")) do
-				if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
-					v:AddEntityRelationship(ply,D_LI,99)
-					table.insert(v.VJ_AddCertainEntityAsFriendly,ply)
-				else
-					v:AddEntityRelationship(ply,D_HT,99)
-					table.insert(v.VJ_AddCertainEntityAsEnemy,ply)
+	if SERVER then
+		local canRun = false
+		local ent = NULL
+		for _,v in pairs(ents.FindByClass("sent_vj_zs_gamemode")) do
+			canRun = true
+			ent = v
+		end
+		if !canRun then return end
+		local function RestorePlayerWeapons(ply,ent)
+			local wave = ent.Wave
+			timer.Simple(0.1,function()
+				if IsValid(ply) && IsValid(ent) then
+					ply:StripWeapons()
+					ply:StripAmmo()
+					for i = 0,wave do
+						ent:ObtainWaveWeapon(ply,i)
+					end
 				end
-			end
-		end)
+			end)
+			-- timer.Simple(0.1,function()
+				-- if IsValid(ply) && IsValid(ent) then
+					-- ply:StripWeapons()
+					-- ply:StripAmmo()
+				-- end
+			-- end)
+			-- timer.Simple(0.11,function()
+				-- if IsValid(ply) && IsValid(ent) then
+					-- for i = 0,wave do
+						-- timer.Simple(0.1 *wave,function()
+							-- if IsValid(ply) && IsValid(ent) then
+								-- ent:ObtainWaveWeapon(ply,wave)
+							-- end
+						-- end)
+					-- end
+				-- end
+			-- end)
+		end
+		if !ply.VJ_ZS_IsZombie then
+			RestorePlayerWeapons(ply,ent)
+		end
+		if GetConVarNumber("vj_zs_allowplayerzombies") == 0 then ply.VJ_ZS_IsZombie = false; ply:SetNWBool("VJ_ZS_IsZombie",false) return end
+		if ply.VJ_ZS_IsZombie then
+			timer.Simple(0.01,function()
+				ply:StripWeapons()
+				local wep = ent:PickPlayerClass()
+				ply.VJ_ZS_ZombieClass = wep
+				ply.VJ_CanBePickedUpWithOutUse = true
+				ply.VJ_CanBePickedUpWithOutUse_Class = wep
+				ply:Give(wep)
+				ply.VJ_NPC_Class = {}
+				table.insert(ply.VJ_NPC_Class,"CLASS_ZOMBIE")
+				ply:SelectWeapon(wep)
+				ply:SetPos(ent:GetRandomSpawn(80))
+				for _,v in pairs(ents.FindByClass("npc_vj_*")) do
+					if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
+						v:AddEntityRelationship(ply,D_LI,99)
+						table.insert(v.VJ_AddCertainEntityAsFriendly,ply)
+					else
+						v:AddEntityRelationship(ply,D_HT,99)
+						table.insert(v.VJ_AddCertainEntityAsEnemy,ply)
+					end
+				end
+			end)
+		end
 	end
 end)
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -345,6 +439,7 @@ function ENT:SetIntermission(nextWave)
 	if self.InIntermission then return end
 	self.BossRound = false
 	if nextWave == self.TotalWaves +1 then
+		self:PlayerSound("weapons/physcannon/energy_disintegrate4.wav")
 		if self.TotalDeaths < game.MaxPlayers() then
 			self:PlayerSound("cpt_zs/music/humanwin.mp3")
 			self:PlayerMsg("The living have prevailed!")
@@ -382,6 +477,11 @@ function ENT:SetIntermission(nextWave)
 			self.InIntermission = false
 			if nextWave == 1 then
 				self.StartedOnslaught = true
+				for _,v in pairs(player.GetAll()) do
+					if v:Alive() && !v.VJ_ZS_IsZombie then
+						self:ObtainWaveWeapon(v,1)
+					end
+				end
 				if GetConVarNumber("vj_zs_allowplayerzombies") == 1 then
 					if SERVER then
 						for _,v in pairs(player.GetAll()) do
@@ -418,7 +518,19 @@ function ENT:SetWave(num)
 	else
 		self:PlayerSound("ambient/atmosphere/cave_hit1.wav")
 	end
+	if num > 0 then
+		timer.Simple(self.WaveTime *math.Rand(0.05,0.95),function()
+			if IsValid(self) then
+				self:RandomResources()
+			end
+		end)
+	end
 	self.Wave = num
+	for _,v in pairs(player.GetAll()) do
+		if v:Alive() && !v.VJ_ZS_IsZombie then
+			self:ObtainWaveWeapon(v,num)
+		end
+	end
 	if math.random(1,self.BossChance) == 1 then
 		self.BossRound = true
 	end
@@ -428,6 +540,16 @@ function ENT:SetWave(num)
 	end
 	self:SetupZombies()
 	self.NextWaveT = CurTime() +self.WaveTime
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:RandomResources()
+	for _,v in pairs(player.GetAll()) do
+		if v:Alive() && !v.VJ_ZS_IsZombie then
+			v:ChatPrint("Ammo Restored!")
+			v:VJ_RestoreAmmo(false,50,250)
+		end
+	end
+	self:PlayerSound("weapons/physcannon/physcannon_charge.wav")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SpawnThink(wave,max)

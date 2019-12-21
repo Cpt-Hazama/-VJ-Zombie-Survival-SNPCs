@@ -1,0 +1,5 @@
+VertexLitGeneric
+{
+	"$basetexture"	"models/cpthazama/zombiesurvival/weapons/cade_hammer"
+	"$surfaceprop" "weapon"
+}

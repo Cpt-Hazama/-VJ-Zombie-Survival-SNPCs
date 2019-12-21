@@ -17,7 +17,9 @@ if VJExists == true then
 	local vCat = "Zombie Survival - Tools"
 	VJ.AddNPC("Gamemode","sent_vj_zs_gamemode",vCat)
 	VJ.AddNPC("Zombie Gas","sent_vj_zs_spawner",vCat)
+	VJ.AddNPC("Ammo Crate","sent_vj_zs_ammocrate",vCat)
 
+	-- VJ.AddNPC_HUMAN("Player Bot","npc_vj_hzs_bot",{"weapon_vj_hl2_crossbow","weapon_vj_hl2_crossbow","weapon_vj_357","weapon_vj_9mmpistol","weapon_vj_glock17","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_k3","weapon_vj_k3","weapon_vj_ar2","weapon_vj_ar2","weapon_vj_ak47","weapon_vj_m16a1","weapon_vj_mp40","weapon_vj_spas12","weapon_vj_rpg","weapon_vj_blaster"},vCat)
 	VJ.AddNPC("SMG Turret","npc_vj_hzs_turret",vCat)
 	VJ.AddNPC("Shotgun Turret","npc_vj_hzs_turret_shotguns",vCat)
 	VJ.AddNPC("Sniper Turret","npc_vj_hzs_turret_sniper",vCat)
@@ -56,7 +58,28 @@ if VJExists == true then
 			end
 		end
 	end)
+	
+	game.AddAmmoType({name="vj_zs_boards",dmgtype=DMG_GENERIC})
 
+	local PLY = FindMetaTable("Player")
+	function PLY:VJ_GetAmmoTypes()
+		local tbl = {}
+		for ammotype,amount in pairs(self:GetAmmo()) do
+			table.insert(tbl,ammotype)
+		end
+		return tbl
+	end
+
+	function PLY:VJ_RestoreAmmo(amount,a,b)
+		for ammotype,ammocount in pairs(self:GetAmmo()) do
+			if amount == false then
+				self:SetAmmo(ammocount +math.random(a,b),ammotype)
+			else
+				self:SetAmmo(ammocount +amount,ammotype)
+			end
+		end
+	end
+	
 	local ENT = FindMetaTable("NPC")
 	function ENT:CreateZSBlood(count,dmginfo)
 		for i = 1,count do
@@ -144,6 +167,7 @@ if VJExists == true then
 	VJ.AddClientConVar("vj_zs_music_volume",50)
 	VJ.AddClientConVar("vj_zs_musicset",1)
 	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
+	VJ.AddConVar("vj_zs_weapons",0) -- Enforces set weapons to players
 	VJ.AddConVar("vj_zs_allowplayerzombies",0) -- Allow players to play as zombies
 	VJ.AddConVar("vj_zs_becomezombies",0) -- If the above is true, then players will become zombies on death
 	VJ.AddConVar("vj_zs_wavetime",180)
@@ -168,6 +192,9 @@ if VJExists == true then
 				Panel:AddControl("Slider", { Label 	= "Music Set", Command = "vj_zs_musicset", Type = "Float", Min = 1, Max = 2})
 				Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST)")
 				Panel:AddControl("Label", {Text = "Notice: The below settings are server/admin only"})
+				Panel:AddControl("Checkbox", {Label = "Enforce Human Weapons?", Command = "vj_zs_weapons"})
+				Panel:AddControl("Label", {Text = "Currently no way to set your own weapons via menu"})
+				Panel:AddControl("Label", {Text = "Decompile the mod and change the weapons yourself (if you want)"})
 				Panel:AddControl("Checkbox", {Label = "Allow Player Zombies?", Command = "vj_zs_allowplayerzombies"})
 				Panel:AddControl("Checkbox", {Label = "Become Zombies on Death?", Command = "vj_zs_becomezombies"})
 				Panel:AddControl("Slider", { Label 	= "Wave Time", Command = "vj_zs_wavetime", Type = "Float", Min = 5, Max = 720})
