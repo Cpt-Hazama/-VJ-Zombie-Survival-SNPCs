@@ -19,7 +19,7 @@ if VJExists == true then
 	VJ.AddNPC("Zombie Gas","sent_vj_zs_spawner",vCat)
 	VJ.AddNPC("Ammo Crate","sent_vj_zs_ammocrate",vCat)
 
-	-- VJ.AddNPC_HUMAN("Player Bot","npc_vj_hzs_bot",{"weapon_vj_hl2_crossbow","weapon_vj_hl2_crossbow","weapon_vj_357","weapon_vj_9mmpistol","weapon_vj_glock17","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_k3","weapon_vj_k3","weapon_vj_ar2","weapon_vj_ar2","weapon_vj_ak47","weapon_vj_m16a1","weapon_vj_mp40","weapon_vj_spas12","weapon_vj_rpg","weapon_vj_blaster"},vCat)
+	VJ.AddNPC_HUMAN("Player Bot","npc_vj_hzs_bot",{"weapon_vj_zsh_deagle","weapon_vj_zsh_glock","weapon_vj_zsh_mp5","weapon_vj_zsh_p228","weapon_vj_zsh_usp","weapon_vj_357","weapon_vj_9mmpistol","weapon_vj_glock17","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_k3","weapon_vj_k3","weapon_vj_ar2","weapon_vj_ar2","weapon_vj_ak47","weapon_vj_m16a1","weapon_vj_mp40","weapon_vj_spas12","weapon_vj_blaster"},vCat)
 	VJ.AddNPC("SMG Turret","npc_vj_hzs_turret",vCat)
 	VJ.AddNPC("Shotgun Turret","npc_vj_hzs_turret_shotguns",vCat)
 	VJ.AddNPC("Sniper Turret","npc_vj_hzs_turret_sniper",vCat)
@@ -48,6 +48,12 @@ if VJExists == true then
 	VJ.AddNPC("(BOSS) Giga Gore Child","npc_vj_zs_gorechild_boss",vCat)
 	VJ.AddNPC("(BOSS) Puke Puss","npc_vj_zs_pukepuss",vCat)
 	VJ.AddNPC("(BOSS) Tickle Monster","npc_vj_zs_ticklemonster",vCat)
+
+	VJ.AddNPCWeapon("VJ_ZS_Deagle","weapon_vj_zsh_deagle",false,vCat)
+	VJ.AddNPCWeapon("VJ_ZS_Glock","weapon_vj_zsh_glock",false,vCat)
+	VJ.AddNPCWeapon("VJ_ZS_MP5","weapon_vj_zsh_mp5",false,vCat)
+	VJ.AddNPCWeapon("VJ_ZS_p228","weapon_vj_zsh_p228",false,vCat)
+	VJ.AddNPCWeapon("VJ_ZS_USP","weapon_vj_zsh_usp",false,vCat)
 	
 	hook.Add("EntityTakeDamage","VJ_ZS_PlayerSounds",function(ent,dmginfo)
 		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZHealth then
@@ -168,6 +174,7 @@ if VJExists == true then
 	VJ.AddClientConVar("vj_zs_musicset",1)
 	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
 	VJ.AddConVar("vj_zs_weapons",0) -- Enforces set weapons to players
+	VJ.AddConVar("vj_zs_botanger",0) -- Allow player bots to become angry after friendly damage
 	VJ.AddConVar("vj_zs_allowplayerzombies",0) -- Allow players to play as zombies
 	VJ.AddConVar("vj_zs_becomezombies",0) -- If the above is true, then players will become zombies on death
 	VJ.AddConVar("vj_zs_wavetime",180)
@@ -193,6 +200,7 @@ if VJExists == true then
 				Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST)")
 				Panel:AddControl("Label", {Text = "Notice: The below settings are server/admin only"})
 				Panel:AddControl("Checkbox", {Label = "Enforce Human Weapons?", Command = "vj_zs_weapons"})
+				Panel:AddControl("Checkbox", {Label = "Player Bot NPCs can be angry from TD?", Command = "vj_zs_botanger"})
 				Panel:AddControl("Label", {Text = "Currently no way to set your own weapons via menu"})
 				Panel:AddControl("Label", {Text = "Decompile the mod and change the weapons yourself (if you want)"})
 				Panel:AddControl("Checkbox", {Label = "Allow Player Zombies?", Command = "vj_zs_allowplayerzombies"})

@@ -197,6 +197,8 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:ObtainWaveWeapon(ent,wave)
 	local wep = VJ_PICK(self.PlayerWeapons[wave])
+	ent.VJ_CanBePickedUpWithOutUse = true
+	ent.VJ_CanBePickedUpWithOutUse_Class = wep
 	ent:Give(wep)
 	-- ent:EmitSound("weapons/physcannon/physcannon_charge.wav",45,100)
 	ent:ChatPrint("Unlocked new weapon!")
@@ -212,6 +214,8 @@ function ENT:EnforceStarterWeapons()
 				self:ObtainWaveWeapon(v,wave)
 			end
 			if math.random(1,2) == 1 then
+				ent.VJ_CanBePickedUpWithOutUse = true
+				ent.VJ_CanBePickedUpWithOutUse_Class = "weapon_vj_zsh_barricade"
 				ent:Give("weapon_vj_zsh_barricade")
 			end
 		end

@@ -93,16 +93,21 @@ end)
 function ENT:Initialize()
 	self.CanStartThisShit = CurTime() +1
 	for _,v in pairs(player.GetAll()) do
-		v.ZS_CurrentBeat = 1
-		v.ZS_OldBeat = 0
-		v.ZS_TotalZombies = 0
-		v.ZS_NextBeatT = 0
-		v.ZS_NextCheckT = 0
-		v.ZS_TotalBeats = 0
-		v.ZS_BeatDir = nil
-		v.tbl_Beats = {}
-		self:SetUpBeats(v)
+		self:ResetBeats(v)
 	end
+end
+
+function ENT:ResetBeats(v)
+	v.ZS_CurrentBeat = 1
+	v.ZS_OldBeat = 0
+	v.ZS_Set = 0
+	v.ZS_TotalZombies = 0
+	v.ZS_NextBeatT = 0
+	v.ZS_NextCheckT = 0
+	v.ZS_TotalBeats = 0
+	v.ZS_BeatDir = nil
+	v.tbl_Beats = {}
+	self:SetUpBeats(v)
 end
 
 function ENT:SetUpBeats(v)
@@ -127,6 +132,7 @@ function ENT:SetUpBeats(v)
 	local ZS_Beat = CreateSound(v,"cpt_zs/music/lasthuman.wav")
 	ZS_Beat:SetSoundLevel(vol)
 	v.tbl_Beats[max +1] = ZS_Beat
+	v.ZS_Set = math.Round(set)
 end
 
 function ENT:PlayBeat(v,i)
@@ -156,6 +162,13 @@ function ENT:ZS_Music(ent)
 	local wave = self:GetNWInt("VJ_ZSWave")
 	local finalwave = self:GetNWInt("VJ_ZSWaveMax")
 	local isZombie = ent:GetNWBool("VJ_ZS_IsZombie")
+	local set = GetConVarNumber("vj_zs_musicset")
+	-- print(ent.ZS_Set,math.Round(set))
+	-- if ent.ZS_Set != math.Round(set) then
+		-- self:StopBeats(ent)
+		-- self:ResetBeats(ent)
+		-- return
+	-- end
 	if CurTime() > ent.ZS_NextCheckT then
 		local tbl = {}
 		if isZombie then

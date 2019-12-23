@@ -179,7 +179,7 @@ function SWEP:CustomOnHolster()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
-	self.Ghost:Remove()
+	if IsValid(self.Ghost) then self.Ghost:Remove() end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:BoardSounds(count,ent)

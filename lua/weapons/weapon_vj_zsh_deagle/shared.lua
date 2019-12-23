@@ -22,7 +22,7 @@ SWEP.ViewModelFlip				= false -- Flip the model? Usally used for CS:S models
 SWEP.Spawnable					= true
 SWEP.AdminSpawnable				= false
 	-- Primary Fire ---------------------------------------------------------------------------------------------------------------------------------------------
-SWEP.Primary.Damage				= 25 -- Damage
+SWEP.Primary.Damage				= 45 -- Damage
 SWEP.Primary.PlayerDamage		= "Double" -- Only applies for players | "Same" = Same as self.Primary.Damage, "Double" = Double the self.Primary.Damage OR put a number to be different from self.Primary.Damage
 SWEP.Primary.Force				= 2 -- Force applied on the object the bullet hits
 SWEP.Primary.ClipSize			= 7 -- Max amount of bullets per clip
