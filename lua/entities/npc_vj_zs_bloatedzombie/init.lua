@@ -134,7 +134,8 @@ function ENT:CustomOnThink()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnDoKilledEnemy(argent,attacker,inflictor)
-	if attacker == self && argent:IsPlayer() || attacker == self && argent:IsNPC() && argent:GetClass() == "npc_vj_zsh_bot" then
+	if !IsValid(argent) then return end
+	if attacker == self && argent:IsPlayer() || IsValid(argent) && attacker == self && argent:IsNPC() && argent:GetClass() == "npc_vj_hzs_bot" then
 		argent:EmitSound("music/stingers/hl1_stinger_song28.mp3",42,100)
 		local z = ents.Create("npc_vj_zs_freshdead")
 		z:SetModel(argent:GetModel())

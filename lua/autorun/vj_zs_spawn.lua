@@ -175,6 +175,7 @@ if VJExists == true then
 	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
 	VJ.AddConVar("vj_zs_weapons",0) -- Enforces set weapons to players
 	VJ.AddConVar("vj_zs_botanger",0) -- Allow player bots to become angry after friendly damage
+	VJ.AddConVar("vj_zs_botchat",1)
 	VJ.AddConVar("vj_zs_allowplayerzombies",0) -- Allow players to play as zombies
 	VJ.AddConVar("vj_zs_becomezombies",0) -- If the above is true, then players will become zombies on death
 	VJ.AddConVar("vj_zs_wavetime",180)
@@ -200,6 +201,7 @@ if VJExists == true then
 				Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST)")
 				Panel:AddControl("Label", {Text = "Notice: The below settings are server/admin only"})
 				Panel:AddControl("Checkbox", {Label = "Enforce Human Weapons?", Command = "vj_zs_weapons"})
+				Panel:AddControl("Checkbox", {Label = "Player Bot NPCs can type in the chat?", Command = "vj_zs_botchat"})
 				Panel:AddControl("Checkbox", {Label = "Player Bot NPCs can be angry from TD?", Command = "vj_zs_botanger"})
 				Panel:AddControl("Label", {Text = "Currently no way to set your own weapons via menu"})
 				Panel:AddControl("Label", {Text = "Decompile the mod and change the weapons yourself (if you want)"})

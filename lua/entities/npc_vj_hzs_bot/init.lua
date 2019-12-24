@@ -230,6 +230,7 @@ function ENT:PlayerName()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:BotChat(text,ply)
+	if GetConVarNumber("vj_zs_botchat") == 0 then return end
 	if ply then
 		local text = VJ_PICK(self.tbl_ChatTalk)
 		local replace
