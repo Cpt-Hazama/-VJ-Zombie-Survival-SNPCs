@@ -30,6 +30,7 @@ function ENT:CustomOnInitialize()
 	self.AnimTbl_IdleStand = {"zombie_run"}
 	self.AnimTbl_Walk = {self:GetSequenceActivity(self:LookupSequence("zombie_run"))}
 	self.AnimTbl_Run = {self:GetSequenceActivity(self:LookupSequence("zombie_run"))}
+	self:VJ_ZSSkin("models/props_c17/doll01")
 end
 /*-----------------------------------------------
 	*** Copyright (c) 2019 by Cpt. Hazama, All rights reserved. ***

@@ -47,6 +47,7 @@ function ENT:CustomOnInitialize()
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
 	self:DrawShadow(false)
+	-- self:VJ_ZSSkin("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:WraithDraw(trans)

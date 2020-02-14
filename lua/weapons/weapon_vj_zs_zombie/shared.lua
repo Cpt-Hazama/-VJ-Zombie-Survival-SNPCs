@@ -6,6 +6,8 @@ SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/zombie.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/zombie.mdl"
 SWEP.ZHealth					= 110
 SWEP.ZSpeed						= 125
+SWEP.ZSteps 					= {"npc/zombie/foot1.wav","npc/zombie/foot2.wav","npc/zombie/foot3.wav"}
+SWEP.ZStepTime 					= 520
 SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
@@ -60,6 +62,20 @@ function SWEP:Reload()
 		self:EmitSound("npc/zombie/zombie_voice_idle"..math.random(1,14)..".wav",80,100)
 		self.NextMoanT = CurTime() +5
 	end
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:ZS_Animations(ply,w,a,s,d,lmb,rmb)
+	local act = ACT_IDLE
+	if (!w && !a && !s && !d) then
+		act = ACT_IDLE
+	else
+		if lmb then
+			act = ACT_MELEE_ATTACK1
+		else
+			act = ACT_WALK
+		end
+	end
+	return act
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:SecondaryAttack()
@@ -154,6 +170,7 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			self:VJ_ZSSkin("models/zombie_classic/zombie_classic_sheet")
 			-- self.Owner:SetViewOffset(Vector(0,0,self.ViewOffset))
 		end
 	end)

@@ -2,6 +2,8 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include('shared.lua')
 
+util.AddNetworkString("vj_zs_sound")
+
 ENT.BossRound = false
 ENT.Wave = 0
 ENT.TotalWaves = 8 -- 8
@@ -40,8 +42,10 @@ ENT.ZombieThresholds = {
 	},
 	[6] = {
 		"npc_vj_zs_poisonheadcrab",
+		"npc_vj_zs_draggy",
 	},
 	[7] = {
+		"npc_vj_zs_burnzie",
 		"npc_vj_zs_poisonzombie",
 		"npc_vj_zs_zombine",
 	},
@@ -69,12 +73,14 @@ ENT.PlayerZombieThresholds = {
 	},
 	[5] = {
 		"weapon_vj_zs_wraith",
-		"weapon_vj_zs_wraithcrab"
+		"weapon_vj_zs_wraithcrab",
 	},
 	[6] = {
-		"weapon_vj_zs_poisonheadcrab"
+		"weapon_vj_zs_poisonheadcrab",
+		"weapon_vj_zs_draggy",
 	},
 	[7] = {
+		"weapon_vj_zs_burnzie",
 		"weapon_vj_zs_poisonzombie",
 		"weapon_vj_zs_zombine",
 	},
@@ -95,6 +101,7 @@ ENT.PlayerWeapons = { -- Replace these with whatever you want, too lazy to make 
 	},
 	[3] = {
 		"weapon_vj_smg1",
+		"weapon_vj_zs_tmp",
 	},
 	[4] = {
 		"weapon_vj_ak47",
@@ -120,7 +127,10 @@ function ENT:SetupZombies() -- Called when wave starts
 	local oldCount = #self.ZombieClasses
 	table.Empty(self.ZombieClasses)
 	table.Empty(self.PlayerClasses)
-	for i = 1,self.Wave do
+	local free = tobool(GetConVarNumber("vj_zs_freezombies"))
+	local counter = self.Wave
+	if free then counter = self.TotalWaves end
+	for i = 1,counter do
 		for _,z in pairs(self.ZombieThresholds[i]) do
 			table.insert(self.ZombieClasses,z)
 		end
@@ -330,16 +340,30 @@ hook.Add("PlayerSpawn","VJ_ZS_ZombiePlayers",function(ply)
 		end
 		if GetConVarNumber("vj_zs_allowplayerzombies") == 0 then ply.VJ_ZS_IsZombie = false; ply:SetNWBool("VJ_ZS_IsZombie",false) return end
 		if ply.VJ_ZS_IsZombie then
+			ply.VJ_NPC_Class = {}
+			table.insert(ply.VJ_NPC_Class,"CLASS_ZOMBIE")
+			ply.VJ_NPC_Class = {"CLASS_ZOMBIE"}
+			ply:SetPos(ent:GetRandomSpawn(80))
+			for _,v in pairs(ents.FindByClass("npc_vj_*")) do
+				if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
+					v:AddEntityRelationship(ply,D_LI,99)
+					table.insert(v.VJ_AddCertainEntityAsFriendly,ply)
+				else
+					v:AddEntityRelationship(ply,D_HT,99)
+					table.insert(v.VJ_AddCertainEntityAsEnemy,ply)
+				end
+			end
 			timer.Simple(0.01,function()
 				ply:StripWeapons()
-				local wep = ent:PickPlayerClass()
+				local wep = ent:PickPlayerClass(ply)
 				ply.VJ_ZS_ZombieClass = wep
 				ply.VJ_CanBePickedUpWithOutUse = true
 				ply.VJ_CanBePickedUpWithOutUse_Class = wep
 				ply:Give(wep)
+				ply:SelectWeapon(wep)
 				ply.VJ_NPC_Class = {}
 				table.insert(ply.VJ_NPC_Class,"CLASS_ZOMBIE")
-				ply:SelectWeapon(wep)
+				ply.VJ_NPC_Class = {"CLASS_ZOMBIE"}
 				ply:SetPos(ent:GetRandomSpawn(80))
 				for _,v in pairs(ents.FindByClass("npc_vj_*")) do
 					if VJ_HasValue(v.VJ_NPC_Class,"CLASS_ZOMBIE") then
@@ -354,6 +378,14 @@ hook.Add("PlayerSpawn","VJ_ZS_ZombiePlayers",function(ply)
 		end
 	end
 end)
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:PlayerNWSound(ply,snd,vo)
+	if vo && GetConVarNumber("vj_zs_vo") == 0 then return end
+    net.Start("vj_zs_sound")
+		net.WriteEntity(ply)
+		net.WriteString(snd)
+    net.Send(ply)
+end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:PlayerSound(snd)
 	local tb = {}
@@ -399,8 +431,16 @@ function ENT:PickClass()
 	return VJ_PICKRANDOMTABLE(self.ZombieClasses)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function ENT:PickPlayerClass()
-	return VJ_PICKRANDOMTABLE(self.PlayerClasses)
+function ENT:PickPlayerClass(ply)
+	local tbl = self.PlayerClasses
+	if GetConVarNumber("vj_zs_zombieclass") == 0 then
+		return VJ_PICKRANDOMTABLE(tbl)
+	end
+	local requestedClass = self.PlayerClasses[GetConVarNumber("vj_zs_zombieclass")]
+	if requestedClass == nil then
+		return VJ_PICKRANDOMTABLE(tbl)
+	end
+	return requestedClass
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:GetHighestScore(tb)
@@ -439,18 +479,37 @@ function ENT:DecideScores()
 	if tP then self.tbl_ScoreBoard["longestsurvival"] = {ply=tP:Nick(),value=hT} end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:DoEndingVoices()
+	if self.TotalDeaths < game.MaxPlayers() then
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,"cpt_zs/music/humanwin.mp3")
+			if v.VJ_ZS_IsZombie then
+				self:PlayerNWSound(v,"cpt_zs/vo/zombie_wave_outro_lose.wav",true)
+			else
+				self:PlayerNWSound(v,"cpt_zs/vo/human_wave_outro.wav",true)
+			end
+		end
+		self:PlayerMsg("The living have prevailed!")
+	else
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,"cpt_zs/music/zombie_win.wav")
+			if v.VJ_ZS_IsZombie then
+				self:PlayerNWSound(v,"cpt_zs/vo/zombie_wave_outro.wav",true)
+			end
+		end
+		self:PlayerMsg("The undead have prevailed!")
+	end
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SetIntermission(nextWave)
 	if self.InIntermission then return end
 	self.BossRound = false
 	if nextWave == self.TotalWaves +1 then
-		self:PlayerSound("weapons/physcannon/energy_disintegrate4.wav")
-		if self.TotalDeaths < game.MaxPlayers() then
-			self:PlayerSound("cpt_zs/music/humanwin.mp3")
-			self:PlayerMsg("The living have prevailed!")
-		else
-			self:PlayerSound("cpt_zs/music/zombie_win.wav")
-			self:PlayerMsg("The undead have prevailed!")
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,"weapons/physcannon/energy_disintegrate4.wav")
 		end
+		-- self:PlayerSound("weapons/physcannon/energy_disintegrate4.wav")
+		self:DoEndingVoices()
 		self:DecideScores()
 		local kills = self.tbl_ScoreBoard["mostkills"]
 		local deaths = self.tbl_ScoreBoard["mostdeaths"]
@@ -470,11 +529,21 @@ function ENT:SetIntermission(nextWave)
 	end
 	self.InIntermission = true
 	if nextWave == 1 then
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,self:GetStartSong())
+			self:PlayerNWSound(v,"cpt_zs/vo/human_prepare.wav",true)
+		end
 		self:PlayerMsg("Prepare your defenses! (".. self.IntermissionTime .. " seconds until the undead arrive.)")
-		self:PlayerSound(self:GetStartSong())
 	else
-		self:PlayerMsg("The undead have stop rising! (".. self.IntermissionTime .. " second intermission.)")
-		self:PlayerSound("ambient/atmosphere/cave_hit5.wav")
+		self:PlayerMsg("The undead have stopped rising! (".. self.IntermissionTime .. " second intermission.)")
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,"ambient/atmosphere/cave_hit5.wav")
+			if v.VJ_ZS_IsZombie then
+				self:PlayerNWSound(v,"cpt_zs/vo/zombie_wave_over.wav",true)
+			else
+				self:PlayerNWSound(v,"cpt_zs/vo/human_wave_over.wav",true)
+			end
+		end
 	end
 	timer.Simple(self.IntermissionTime,function()
 		if IsValid(self) then
@@ -503,10 +572,22 @@ function ENT:SetIntermission(nextWave)
 			self:SetWave(nextWave)
 		end
 	end)
+	if nextWave == 1 then
+		timer.Simple(self.IntermissionTime -11,function()
+			if IsValid(self) then
+				for _,v in pairs(player.GetAll()) do
+					self:PlayerNWSound(v,"cpt_zs/vo/human_10seconds.wav",true)
+				end
+			end
+		end)
+	end
 	for i = 1,5 do
 		timer.Simple(self.IntermissionTime -i,function()
-			if IsValid(self) then
-				self:PlayerSound("buttons/lightswitch2.wav")
+				if IsValid(self) then
+				for _,v in pairs(player.GetAll()) do
+					self:PlayerNWSound(v,"cpt_zs/vo/human_" .. tostring(i) .. ".wav",true)
+					self:PlayerNWSound(v,"buttons/lightswitch2.wav")
+				end
 				self:PlayerMsg(i .. "..")
 			end
 		end)
@@ -518,9 +599,15 @@ function ENT:SetWave(num)
 		return
 	end
 	if num == 1 then
-		self:PlayerSound("ambient/creatures/town_zombie_call1.wav")
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,"ambient/creatures/town_zombie_call1.wav")
+		end
+		-- self:PlayerSound("ambient/creatures/town_zombie_call1.wav")
 	else
-		self:PlayerSound("ambient/atmosphere/cave_hit1.wav")
+		for _,v in pairs(player.GetAll()) do
+			self:PlayerNWSound(v,"ambient/atmosphere/cave_hit1.wav")
+		end
+		-- self:PlayerSound("ambient/atmosphere/cave_hit1.wav")
 	end
 	if num > 0 then
 		timer.Simple(self.WaveTime *math.Rand(0.05,0.95),function()
@@ -551,9 +638,9 @@ function ENT:RandomResources()
 		if v:Alive() && !v.VJ_ZS_IsZombie then
 			v:ChatPrint("Ammo Restored!")
 			v:VJ_RestoreAmmo(false,50,250)
+			self:PlayerNWSound(v,"weapons/physcannon/physcannon_charge.wav")
 		end
 	end
-	self:PlayerSound("weapons/physcannon/physcannon_charge.wav")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SpawnThink(wave,max)

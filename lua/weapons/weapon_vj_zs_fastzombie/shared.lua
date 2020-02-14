@@ -6,6 +6,8 @@ SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/fastzombie.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/fastzombie.mdl"
 SWEP.ZHealth					= 80
 SWEP.ZSpeed						= 325
+SWEP.ZSteps 					= {"npc/fast_zombie/foot1.wav","npc/fast_zombie/foot2.wav","npc/fast_zombie/foot3.wav","npc/fast_zombie/foot4.wav"}
+SWEP.ZStepTime 					= 280
 SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
@@ -62,10 +64,24 @@ function SWEP:Reload()
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:Climb()
+	local tr = self.Owner:GetEyeTrace()
+	self.Owner:SetGroundEntity(NULL)
+	-- self.Owner:SetVelocity(self.Owner:GetUp() *250)
+	self.Owner:SetVelocity(Vector(0,0,4) +(tr && tr.Hit && tr.HitNormal:Angle():Up()) *250)
+	self.Owner:EmitSound("player/footsteps/metalgrate" .. math.random(1,4) .. ".wav",65,100)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.NextRangeT = CurTime()
 function SWEP:SecondaryAttack()
-	if CurTime() > self.NextRangeT then
+	if CurTime() > self.NextRangeT && self.Owner:IsOnGround() then
 		if (CLIENT) then return end
+		local dist = self.Owner:GetEyeTrace().HitPos:Distance(self.Owner:EyePos())
+		if dist < 60 then
+			-- self:Climb()
+			-- self.NextRangeT = CurTime() +0.3
+			return
+		end
 		self.Owner:ViewPunch(Angle(8,0,0))
 		self.Owner:SetGroundEntity(NULL)
 		self.Owner:SetVelocity(self.Owner:GetForward() *950 +self.Owner:GetUp() *150)
@@ -118,6 +134,11 @@ function SWEP:CustomOnThink()
 		self.Owner:SetViewOffset(Vector(0,0,45))
 		self.Owner:SetViewOffsetDucked(Vector(0,0,40))
 	end
+	local dist = self.Owner:GetEyeTrace().HitPos:Distance(self.Owner:EyePos())
+	if CurTime() > self.NextRangeT && self.Owner:KeyDown(IN_ATTACK2) && dist < 60 then
+		self:Climb()
+		self.NextRangeT = CurTime() +0.3
+	end
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
 	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
@@ -168,6 +189,7 @@ function SWEP:CustomOnDeploy()
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
 			self.Owner:SetViewOffset(Vector(0,0,45))
 			self.Owner:SetViewOffsetDucked(Vector(0,0,40))
+			self:VJ_ZSSkin("models/zombie_fast/fast_zombie_sheet")
 		end
 	end)
 end

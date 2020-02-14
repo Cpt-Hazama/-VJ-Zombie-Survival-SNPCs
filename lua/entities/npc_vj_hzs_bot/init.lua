@@ -6,7 +6,11 @@ include('shared.lua')
 	without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
 -----------------------------------------------*/
 ENT.Model = {"models/player/kleiner.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
-ENT.StartHealth = 100 //GetConVarNumber("vj_dum_dummy_h")
+local testList = player_manager.AllValidModels()
+for _,v in pairs(testList) do
+	table.insert(ENT.Model,v)
+end
+ENT.StartHealth = 100
 ENT.HullType = HULL_HUMAN
 ENT.BloodColor = "Red"
 ENT.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"} -- NPCs with the same class with be allied to each other
@@ -159,12 +163,6 @@ ENT.GeneralSoundPitch1 = 100
 ENT.GeneralSoundPitch2 = 100
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnInitialize()
-	local ply = player_manager.AllValidModels()
-	local tbl = {}
-	for _,v in pairs(ply) do
-		table.insert(tbl,v)
-	end
-	self:SetModel(VJ_PICK(tbl))
 	self:CapabilitiesAdd(bit.bor(CAP_MOVE_JUMP))
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
@@ -172,6 +170,7 @@ function ENT:CustomOnInitialize()
 	self:DecideName()
 	self.NextIdleChatT = CurTime() +10
 	self.NextCombatChatT = CurTime() +2
+	PrintMessage(HUD_PRINTTALK,self:GetName() .. " has connected")
 	timer.Simple(0.1,function()
 		if IsValid(self) && IsValid(self:GetActiveWeapon()) then
 			self:SetupHoldtypes(self:GetActiveWeapon(),self:GetActiveWeapon().HoldType)
@@ -196,6 +195,7 @@ function ENT:DecideName()
 		name = name .. " [" .. num +1 .. "]"
 	end
 	self:SetName(name)
+	self.PrintName = name
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SetupHoldtypes(wep,ht)
@@ -237,9 +237,11 @@ function ENT:BotChat(text,ply)
 		if string.find(text,"[VJID]") then
 			replace = string.Replace(text,"[VJID]",self:PlayerName())
 		end
-		for _,v in pairs(player.GetAll()) do v:ChatPrint(self:GetName() .. ": " .. tostring(replace)) end
+		-- for _,v in pairs(player.GetAll()) do v:ChatPrint(self:GetName() .. ": " .. tostring(replace)) end
+		PrintMessage(HUD_PRINTTALK,self:GetName() .. ": " .. tostring(replace))
 	else
-		for _,v in pairs(player.GetAll()) do v:ChatPrint(self:GetName() .. ": " .. tostring(text)) end
+		-- for _,v in pairs(player.GetAll()) do v:ChatPrint(self:GetName() .. ": " .. tostring(text)) end
+		PrintMessage(HUD_PRINTTALK,self:GetName() .. ": " .. tostring(text))
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -297,7 +299,8 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnRemove()
 	if self:Health() > 0 then
-		for _,v in pairs(player.GetAll()) do v:ChatPrint(self:GetName() .. " has disconnected") end
+		-- for _,v in pairs(player.GetAll()) do v:ChatPrint(self:GetName() .. " has disconnected") end
+		PrintMessage(HUD_PRINTTALK,self:GetName() .. " has disconnected")
 	end
 end
 /*-----------------------------------------------

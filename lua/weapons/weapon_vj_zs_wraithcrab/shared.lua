@@ -6,6 +6,7 @@ SWEP.ViewModel					= "models/error.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/headcrab.mdl"
 SWEP.ZHealth					= 10
 SWEP.ZSpeed						= 150
+SWEP.ZHull 						= {x=10,y=10,z=8,d=8}
 SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
@@ -146,6 +147,7 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			self:VJ_ZSSkin("models/headcrab_classic/headcrabsheet")
 			self.Owner:SetViewOffset(Vector(0,0,8))
 			self.Owner:SetViewOffsetDucked(Vector(0,0,8))
 		end

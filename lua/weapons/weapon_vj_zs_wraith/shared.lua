@@ -202,6 +202,7 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			self:VJ_ZSSkin("models/stalker/stalker_sheet")
 		end
 	end)
 end

@@ -6,6 +6,7 @@ SWEP.ViewModel					= "models/error.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/poisonheadcrab.mdl"
 SWEP.ZHealth					= 30
 SWEP.ZSpeed						= 180
+SWEP.ZHull 						= {x=10,y=10,z=8,d=8}
 SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2

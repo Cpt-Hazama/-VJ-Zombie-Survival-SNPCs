@@ -49,6 +49,7 @@ function ENT:CustomOnInitialize()
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
 	self:DrawShadow(false)
+	self:VJ_ZSSkin("models/stalker/stalker_sheet")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:WraithDraw(trans)

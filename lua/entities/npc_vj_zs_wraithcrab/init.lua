@@ -9,6 +9,7 @@ function ENT:CustomOnInitialize()
 	self:SetModel("models/cpthazama/zombiesurvival/wraithcrab.mdl")
 	self:SetCollisionBounds(Vector(8,10,15), Vector(-8,-10,0))
 	self:DrawShadow(false)
+	self:VJ_ZSSkin("models/headcrab_classic/headcrabsheet")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:WraithDraw(trans)

@@ -50,6 +50,7 @@ function ENT:CustomOnInitialize()
 	self.AnimTbl_IdleStand = {"zombie_run"}
 	self.AnimTbl_Walk = {self:GetSequenceActivity(self:LookupSequence("zombie_run"))}
 	self.AnimTbl_Run = {self:GetSequenceActivity(self:LookupSequence("zombie_run"))}
+	self:VJ_ZSSkin("models/charple/charple1_sheet")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SpawnBloodParticles(dmginfo,hitgroup)

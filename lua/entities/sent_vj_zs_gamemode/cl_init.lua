@@ -170,23 +170,32 @@ function ENT:ZS_Music(ent)
 		-- return
 	-- end
 	if CurTime() > ent.ZS_NextCheckT then
-		local tbl = {}
-		if isZombie then
-			for _,v in pairs(ents.FindInSphere(ent:GetPos(),400)) do
-				if (v:IsNPC() && !string.find(v:GetClass(),"npc_vj_zs_")) or (v:IsPlayer() && v != ent && !v:GetNWBool("VJ_ZS_IsZombie")) then
-					table.insert(tbl,v)
+		if GetConVarNumber("vj_zs_forcesong") == 0 then
+			local tbl = {}
+			if isZombie then
+				for _,v in pairs(ents.FindInSphere(ent:GetPos(),400)) do
+					if (v:IsNPC() && !string.find(v:GetClass(),"npc_vj_zs_")) or (v:IsPlayer() && v != ent && !v:GetNWBool("VJ_ZS_IsZombie")) then
+						table.insert(tbl,v)
+					end
+				end
+			else
+				for _,v in pairs(ents.FindByClass("npc_vj_zs_*")) do
+					if v:GetPos():Distance(ent:GetPos()) <= 400 then
+						table.insert(tbl,v)
+					end
 				end
 			end
+			ent.ZS_TotalZombies = #tbl
+			local count = math.Round((#tbl *0.65))
+			ent.ZS_CurrentBeat = math.Clamp(count,1,ent.ZS_TotalBeats)
 		else
-			for _,v in pairs(ents.FindByClass("npc_vj_zs_*")) do
-				if v:GetPos():Distance(ent:GetPos()) <= 400 then
-					table.insert(tbl,v)
-				end
+			local beats = ent.ZS_TotalBeats
+			if beats == 8 then
+				ent.ZS_CurrentBeat = math.Round(GetConVarNumber("vj_zs_forcesong_a"))
+			elseif beats == 10 then
+				ent.ZS_CurrentBeat = math.Round(GetConVarNumber("vj_zs_forcesong_b"))
 			end
 		end
-		ent.ZS_TotalZombies = #tbl
-		local count = math.Round((#tbl *0.65))
-		ent.ZS_CurrentBeat = math.Clamp(count,1,ent.ZS_TotalBeats)
 		ent.ZS_NextCheckT = CurTime() +2
 	end
 	-- print(ent.ZS_TotalZombies,ent.ZS_CurrentBeat,ent.ZS_OldBeat,ent.ZS_NextBeatT)

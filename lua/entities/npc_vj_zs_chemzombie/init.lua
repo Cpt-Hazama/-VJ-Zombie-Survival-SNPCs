@@ -34,6 +34,7 @@ function ENT:CustomOnInitialize()
 	self:CapabilitiesAdd(bit.bor(CAP_MOVE_JUMP))
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
+	self:VJ_ZSSkin("models/zombie_poison/poisonzombie_sheet")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SpawnBloodParticles(dmginfo,hitgroup)

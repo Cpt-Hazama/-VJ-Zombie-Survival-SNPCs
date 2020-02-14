@@ -56,6 +56,7 @@ function ENT:CustomOnInitialize()
 	self.AnimTbl_IdleStand = {"zombie_run"}
 	self.AnimTbl_Walk = {self:GetSequenceActivity(self:LookupSequence("zombie_run"))}
 	self.AnimTbl_Run = {self:GetSequenceActivity(self:LookupSequence("zombie_run"))}
+	self:VJ_ZSSkin("models/zombie_fast/fast_zombie_sheet")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SpawnBloodParticles(dmginfo,hitgroup)
@@ -100,7 +101,7 @@ function ENT:BeforeMeleeAttackSoundCode(CustomTbl,Type)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnThink()
-	self:SetMaterial("models/cpthazama/zombiesurvival/fastzombie/fast_zombie_sheet")
+	-- self:SetMaterial("models/cpthazama/zombiesurvival/fastzombie/fast_zombie_sheet")
 	if self.MeleeAttacking then
 		self:AdjustBones({"ValveBiped.Bip01_L_Forearm","ValveBiped.Bip01_R_Forearm"},Vector(26,0,0))
 		self:AdjustBones({"ValveBiped.Bip01_L_Upperarm", "ValveBiped.Bip01_R_Upperarm"},Vector(3,3,3))

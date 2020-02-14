@@ -24,6 +24,7 @@ function ENT:CustomOnInitialize()
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
 	self:SetMaterial("models/cpthazama/zombiesurvival/fastzombie/fast_zombie_sheet")
+	self:VJ_ZSSkin("models/zombie_fast/fast_zombie_sheet")
 end
 /*-----------------------------------------------
 	*** Copyright (c) 2019 by Cpt. Hazama, All rights reserved. ***

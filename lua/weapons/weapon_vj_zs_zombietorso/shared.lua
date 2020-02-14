@@ -6,6 +6,9 @@ SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/zombie.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/zombietorso.mdl"
 SWEP.ZHealth					= 80
 SWEP.ZSpeed						= 275
+SWEP.ZHull 						= {x=15,y=15,z=20,d=16}
+SWEP.ZSteps 					= {"npc/zombie/foot1.wav","npc/zombie/foot2.wav","npc/zombie/foot3.wav"}
+SWEP.ZStepTime 					= 270
 SWEP.ViewModelFOV				= 70
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
@@ -159,6 +162,7 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			self:VJ_ZSSkin("models/zombie_classic/zombie_classic_sheet")
 			self.Owner:SetViewOffset(Vector(0,0,15))
 			self.Owner:SetViewOffsetDucked(Vector(0,0,15))
 		end

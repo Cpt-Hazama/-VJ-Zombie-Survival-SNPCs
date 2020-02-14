@@ -7,6 +7,8 @@ SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/zombine.mdl"
 SWEP.ZHealth					= 400
 SWEP.ZSpeed						= 140
 SWEP.ZSpeedRage					= 190
+SWEP.ZSteps 					= {"npc/zombine/gear1.wav","npc/zombine/gear2.wav","npc/zombine/gear3.wav"}
+SWEP.ZStepTime 					= 500
 SWEP.ViewModelFOV				= 60
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
@@ -83,7 +85,7 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:SecondaryAttack()
 	if CLIENT then return end
-	if CurTime() > self.NextGrenPull && !self.HasPulledGrenade && self.Owner:Health() <= 60 then
+	if CurTime() > self.NextGrenPull && !self.HasPulledGrenade /*&& self.Owner:Health() <= 60*/ then
 		self.HasPulledGrenade = true
 		self:SetNextPrimaryFire(CurTime() +30)
 		self.NextIdle_PrimaryAttack = CurTime() +30
@@ -240,6 +242,7 @@ function SWEP:CustomOnDeploy()
 		if IsValid(self) then
 			self.Owner:SetHealth(self.ZHealth)
 			self.Owner:SetModel(self.ZombieModel); self.Owner:AllowFlashlight(false)
+			self:VJ_ZSSkin("models/zombie_classic/combinesoldiersheet_zombie")
 		end
 	end)
 end
