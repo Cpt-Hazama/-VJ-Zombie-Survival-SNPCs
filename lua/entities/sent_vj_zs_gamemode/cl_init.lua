@@ -98,6 +98,7 @@ function ENT:Initialize()
 end
 
 function ENT:ResetBeats(v)
+	v.ZS_LastHuman = nil
 	v.ZS_CurrentBeat = 1
 	v.ZS_OldBeat = 0
 	v.ZS_Set = 0
@@ -114,13 +115,29 @@ function ENT:SetUpBeats(v)
 	local vol = GetConVarNumber("vj_zs_music_volume")
 	local set = GetConVarNumber("vj_zs_musicset")
 	local max = 1
+	local lasthuman = "cpt_zs/music/lasthuman.wav"
 	local dir = "common/"
 	if set == 1 then
 		max = 8
 		dir = "cpt_zs/music/zbeat"
+		lasthuman = "cpt_zs/music/unlife.wav"
 	elseif set == 2 then
 		max = 10
 		dir = "cpt_zs/music/gmod13/beat"
+		lasthuman = "cpt_zs/music/lasthuman.wav"
+	elseif set == 3 then
+		max = 9
+		dir = "cpt_zs/mrgreen/hbeat"
+		local tblGreen = {
+			"cpt_zs/music/mrgreen/deadlife.wav",
+			"cpt_zs/music/mrgreen/deadlife_insane.wav",
+			"cpt_zs/music/mrgreen/lasthuman.wav",
+			"cpt_zs/music/mrgreen/bosstheme1.wav",
+			"cpt_zs/music/mrgreen/bosstheme2.wav",
+			"cpt_zs/music/mrgreen/bosstheme3.wav",
+			"cpt_zs/music/mrgreen/bosstheme4.wav",
+		}
+		lasthuman = VJ_PICK(tblGreen)
 	end
 	for i = 1,max do
 		local ZS_Beat = CreateSound(v,dir .. i .. ".wav")
@@ -129,8 +146,9 @@ function ENT:SetUpBeats(v)
 	end
 	v.ZS_TotalBeats = max
 	v.ZS_BeatDir = dir
-	local ZS_Beat = CreateSound(v,"cpt_zs/music/lasthuman.wav")
+	local ZS_Beat = CreateSound(v,lasthuman)
 	ZS_Beat:SetSoundLevel(vol)
+	v.ZS_LastHuman = lasthuman
 	v.tbl_Beats[max +1] = ZS_Beat
 	v.ZS_Set = math.Round(set)
 end
@@ -186,7 +204,7 @@ function ENT:ZS_Music(ent)
 				end
 			end
 			ent.ZS_TotalZombies = #tbl
-			local count = math.Round((#tbl *0.65))
+			local count = math.Round((#tbl *0.65)) *GetConVarNumber("vj_zs_beat_multi")
 			ent.ZS_CurrentBeat = math.Clamp(count,1,ent.ZS_TotalBeats)
 		else
 			local beats = ent.ZS_TotalBeats
@@ -194,6 +212,8 @@ function ENT:ZS_Music(ent)
 				ent.ZS_CurrentBeat = math.Round(GetConVarNumber("vj_zs_forcesong_a"))
 			elseif beats == 10 then
 				ent.ZS_CurrentBeat = math.Round(GetConVarNumber("vj_zs_forcesong_b"))
+			elseif beats == 9 then
+				ent.ZS_CurrentBeat = math.Round(GetConVarNumber("vj_zs_forcesong_c"))
 			end
 		end
 		ent.ZS_NextCheckT = CurTime() +2
@@ -205,7 +225,7 @@ function ENT:ZS_Music(ent)
 			if CurTime() > ent.ZS_NextBeatT then
 				self:StopBeats(ent)
 				self:PlayBeat(ent,ent.ZS_TotalBeats +1)
-				ent.ZS_NextBeatT = CurTime() +SoundDuration("cpt_zs/music/lasthuman.wav")
+				ent.ZS_NextBeatT = CurTime() +SoundDuration(ent.ZS_LastHuman)
 			end
 		end
 	else

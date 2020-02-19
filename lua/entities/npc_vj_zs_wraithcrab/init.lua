@@ -31,6 +31,18 @@ function ENT:CustomOnThink()
 	elseif !self:IsMoving() then
 		self:WraithDraw(1)
 	end
+	local enemy = NULL
+	local dist = 0
+	if IsValid(self:GetEnemy()) then
+		enemy = self:GetEnemy()
+		dist = self:VJ_GetNearestPointToEntityDistance(enemy)
+		if enemy.VJ_ZS_IsZombie then
+			self:AddEntityRelationship(enemy,D_LI,99)
+			table.insert(self.VJ_AddCertainEntityAsFriendly,enemy)
+			self:AddEntityRelationship(enemy,D_LI,99)
+			self:SetEnemy(NULL)
+		end
+	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnDoKilledEnemy(argent,attacker,inflictor)

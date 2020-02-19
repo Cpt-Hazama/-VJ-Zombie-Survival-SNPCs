@@ -114,6 +114,12 @@ function ENT:CustomOnThink()
 	if IsValid(self:GetEnemy()) then
 		enemy = self:GetEnemy()
 		dist = self:VJ_GetNearestPointToEntityDistance(enemy)
+		if enemy.VJ_ZS_IsZombie then
+			self:AddEntityRelationship(enemy,D_LI,99)
+			table.insert(self.VJ_AddCertainEntityAsFriendly,enemy)
+			self:AddEntityRelationship(enemy,D_LI,99)
+			self:SetEnemy(NULL)
+		end
 		if dist <= 300 && enemy:Visible(self) && self:Health() <= 60 && math.random(1,20) == 1 && self.HasPulledGrenade == false then
 			self.HasPulledGrenade = true
 			self:VJ_ACT_PLAYACTIVITY("vjges_pullGrenade",true,false,false)

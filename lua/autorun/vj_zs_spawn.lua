@@ -14,6 +14,9 @@ local VJExists = file.Exists("lua/autorun/vj_base_autorun.lua","GAME")
 if VJExists == true then
 	include('autorun/vj_controls.lua')
 
+	VJ_ZS_MaxZoom = 70
+	VJ_ZS_MinZoom = 15
+
 	local vCat = "Zombie Survival - Tools"
 	VJ.AddNPC("Gamemode","sent_vj_zs_gamemode",vCat)
 	VJ.AddNPC("Zombie Gas","sent_vj_zs_spawner",vCat)
@@ -37,6 +40,7 @@ if VJExists == true then
 	VJ.AddNPC("Poison Headcrab","npc_vj_zs_poisonheadcrab",vCat)
 	VJ.AddNPC("Wraithcrab","npc_vj_zs_wraithcrab",vCat)
 	VJ.AddNPC("Chem Zombie","npc_vj_zs_chemzombie",vCat)
+	VJ.AddNPC("Howler","npc_vj_zs_howler",vCat)
 	
 		-- Custom Classes --
 	VJ.AddNPC("Burnzie","npc_vj_zs_burnzie",vCat) -- Burns targets
@@ -60,27 +64,74 @@ if VJExists == true then
 	VJ.AddNPCWeapon("VJ_ZS_USP","weapon_vj_zsh_usp",false,vCat)
 	VJ.AddNPCWeapon("VJ_ZS_TMP","weapon_vj_zsh_tmp",false,vCat)
 
-	if SERVER then
-		-- hook.Add("Think","VJ_ZS_Animations",function()
-			-- local ent = player.GetAll()
-			-- for _,ply in pairs(ent) do
-				-- if !ply:GetNWBool("VJ_ZS_IsZombie") then return end
-				-- if !ply:Alive() then return end
-				-- if !IsValid(ply:GetActiveWeapon()) then return end
-				-- local seq = ply:SelectWeightedSequence(ACT_WALK)
-				-- if ply:GetSequence() ~= seq then
-					-- ply:ResetSequence(seq)
-					-- PrintMessage(HUD_PRINTTALK,seq)
-				-- end
-			-- end
-		-- end)
+	if CLIENT then
+		local ScrollSpeed = 0.01
+		hook.Add("PlayerBindPress","VJ_ZS_ThirdpersonScrolling",function(ply,bind,pressed)
+			if bind != "invnext" && bind != "invprev" then return end
+			if !ply:GetNWBool("VJ_ZS_IsZombie") then return end
+			if ScrollSpeed > CurTime() then
+				return true
+			end
+			ply.VJ_ZS_Scroll = ply.VJ_ZS_Scroll or 0
+			if bind == "invprev" then -- Scrolled up
+				ply.VJ_ZS_Scroll = math.Clamp(ply.VJ_ZS_Scroll -5,0,VJ_ZS_MaxZoom)
+			elseif bind == "invnext" then -- Scrolled down
+				ply.VJ_ZS_Scroll = math.Clamp(ply.VJ_ZS_Scroll +5,0,VJ_ZS_MaxZoom)
+			end
+			local int = ply.VJ_ZS_Scroll
+			net.Start("vj_zs_cameradist")
+				net.WriteEntity(ply)
+				net.WriteInt(int,10)
+			net.SendToServer(ply)
+			ScrollSpeed = CurTime() + 0.01
+			return true
+		end)
 	end
+
+	-- if SERVER then
+		hook.Add("UpdateAnimation","VJ_ZS_Animations",function(ply,vel,maxSeqGroundSpeed)
+			if !ply:GetNWBool("VJ_ZS_IsZombie") then return end
+			if !ply:Alive() then return end
+			if !IsValid(ply:GetActiveWeapon()) then return end
+			local wep = ply:GetActiveWeapon()
+			
+			ply:SetPoseParameter("move_yaw", math.NormalizeAngle(vel:Angle().yaw -ply:EyeAngles().y))
+			
+			local data = {}
+			if wep.ZS_Animations then
+				data = wep:ZS_Animations(vel,maxSeqGroundSpeed)
+			end
+
+			local len = vel:LengthSqr()
+			local rate = 1
+			if len > 1 then
+				rate = math.min(len /maxSeqGroundSpeed ^2,2)
+			end
+
+			if data.sequence then
+				local seq = ply:SelectWeightedSequence(data.sequence)
+				if ply:GetSequence() ~= seq then
+					ply:SetSequence(seq)
+				end
+			end
+
+			if data.movex then
+				ply:SetPoseParameter("move_x",data.movex)
+			end
+			if data.movey then
+				ply:SetPoseParameter("move_y",data.movey)
+			end
+			ply:SetPlaybackRate(rate)
+		end)
+	-- end
 	
-	if SERVER then
+	-- if SERVER then
 		hook.Add("PlayerSpawn","VJ_ZS_PlayerHull",function(ply)
 			local resetHull = true
 			ply.VJ_ZS_SetHull = false
 			ply:ResetHull()
+			ply:SetNWInt("VJ_ZS_Scroll",0)
+			ply.VJ_ZS_Scroll = 0
 			-- timer.Simple(0.5,function()
 				-- if IsValid(ply) then
 					-- if IsValid(ply:GetActiveWeapon()) then
@@ -102,6 +153,15 @@ if VJExists == true then
 			-- end)
 		end)
 		
+		if SERVER then
+			util.AddNetworkString("vj_zs_cameradist")
+			net.Receive("vj_zs_cameradist",function(len,pl)
+				local ply = net.ReadEntity()
+				local amount = net.ReadInt(10)
+				ply.VJ_ZS_Scroll = amount
+			end)
+		end
+		
 		if CLIENT then
 			hook.Add("Tick","VJ_ZS_TickHull",function()
 				local plys = player.GetAll()
@@ -109,28 +169,44 @@ if VJExists == true then
 					if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
 						local wep = ply:GetActiveWeapon()
 						local hull = wep.ZHull
-						-- print("CHANGING")
 						ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
 						ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
 					end
 				end
 			end)
 		end
-		if SERVER then
-			hook.Add("Tick","VJ_ZS_TickHull",function()
-				local plys = player.GetAll()
-				for _,ply in pairs(plys) do
-					if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
-						local wep = ply:GetActiveWeapon()
-						local hull = wep.ZHull
-						-- print("CHANGING")
-						ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
-						ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
-					end
-				end
-			end)
+
+	hook.Add("ShouldDrawLocalPlayer","VJ_ZS_DrawZombie",function(ply)
+		if ply.VJ_ZS_Scroll && ply.VJ_ZS_Scroll > VJ_ZS_MinZoom && ply:GetNWBool("VJ_ZS_IsZombie") then return true end
+	end)
+	
+	hook.Add("CalcView","VJ_ZS_ThirdPersonView",function(ply,pos,angles,fov)
+		local int = ply.VJ_ZS_Scroll
+		local enabled = ply.VJ_ZS_Scroll && ply.VJ_ZS_Scroll > VJ_ZS_MinZoom && ply:GetNWBool("VJ_ZS_IsZombie")
+		if enabled then
+			local view = {}
+			view.origin = ply:VJ_ZSThirdPersonPos(pos,angles)
+			view.angles = ply:EyeAngles()
+			view.fov = fov
+			return view
 		end
+	end)
+	
+	if SERVER then
+		hook.Add("Tick","VJ_ZS_TickHull",function()
+			local plys = player.GetAll()
+			for _,ply in pairs(plys) do
+				if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
+					local wep = ply:GetActiveWeapon()
+					local hull = wep.ZHull
+					-- print("CHANGING")
+					ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+					ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
+				end
+			end
+		end)
 	end
+	-- end
 	
 	hook.Add("EntityTakeDamage","VJ_ZS_PlayerSounds",function(ent,dmginfo)
 		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZHealth then
@@ -146,7 +222,7 @@ if VJExists == true then
 		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZSteps then
 			local tbl = ent:GetActiveWeapon().ZSteps
 			if tbl == false then return true end
-			ent:EmitSound(VJ_PICK(tbl),vol,100)
+			ent:EmitSound(VJ_PICK(tbl),ent:GetActiveWeapon().ZStepVolume or vol,ent:GetActiveWeapon().ZStepPitch or 100)
 			return true
 		end
 	end)
@@ -177,12 +253,76 @@ if VJExists == true then
 	end)
 	
 	game.AddAmmoType({name="vj_zs_boards",dmgtype=DMG_GENERIC})
+	
+	if CLIENT then -- Credits to Infected Wars
+		local VJ_ZS_HowlerTime = 0
+		local VJ_ZS_HowlerLength = 0
+		local VJ_ZS_HowlerTab = {
+			["$pp_colour_addr"] 		= 0,
+			["$pp_colour_addg"] 		= 0,
+			["$pp_colour_addb"] 		= 0,
+			["$pp_colour_brightness"] 	= 0,
+			["$pp_colour_contrast"] 	= 1,
+			["$pp_colour_colour"] 		= 0,
+			["$pp_colour_mulr"] 		= 0,
+			["$pp_colour_mulg"] 		= 0,
+			["$pp_colour_mulb"] 		= 0
+		}
+
+		local function VJ_ZS_DrawHowlerEffects()
+			DrawColorModify(VJ_ZS_HowlerTab)
+			DrawMotionBlur(0.2,math.Clamp(VJ_ZS_HowlerTime -CurTime(),0,1),0)
+			VJ_ZS_HowlerTab["$pp_colour_colour"] = math.Approach(VJ_ZS_HowlerTab["$pp_colour_colour"],1,VJ_ZS_HowlerLength *FrameTime())
+			local sev = math.Clamp(VJ_ZS_HowlerTime -CurTime(),0,5) /35
+			VJ_ZS_HowlerTab["$pp_colour_brightness"] = math.Rand(-sev *2,sev *2)
+			local ply = LocalPlayer()
+			if !ply:GetNWBool("VJ_ZS_IsZombie") then
+				local ang = (ply:GetAimVector() +Vector(math.Rand(-sev,sev),math.Rand(-sev,sev),math.Rand(-sev,sev))):Angle()
+				ply:SetEyeAngles(ang)
+			end
+			if VJ_ZS_HowlerTime < CurTime() then
+				VJ_ZS_HowlerTab["$pp_colour_brightness"] = 0
+				hook.Remove("RenderScreenspaceEffects","VJ_ZS_DrawHowlerEffects")
+			end
+		end	
+
+		function StalkerFuck(length)
+			local len = length or 3
+			hook.Remove("RenderScreenspaceEffects","VJ_ZS_DrawHowlerEffects")
+			VJ_ZS_HowlerTab["$pp_colour_colour"] = 0
+			VJ_ZS_HowlerTime = CurTime() +len
+			VJ_ZS_HowlerLength = len
+			hook.Add("RenderScreenspaceEffects","VJ_ZS_DrawHowlerEffects",VJ_ZS_DrawHowlerEffects)
+		end
+	end
 
 	local PLY = FindMetaTable("Player")
 	function PLY:VJ_GiveWeapon(wep)
 		self.VJ_CanBePickedUpWithOutUse = true
 		self.VJ_CanBePickedUpWithOutUse_Class = wep
 		self:Give(wep)
+	end
+
+	function PLY:VJ_ZS_Howled(iIntensity)
+		if iIntensity == nil then
+			return
+		end
+		self:SendLua( "StalkerFuck("..( iIntensity )..")" )
+	end
+	
+	local ViewHullMins = Vector(-8, -8, -8)
+	local ViewHullMaxs = Vector(8, 8, 8)
+	function PLY:VJ_ZSThirdPersonPos(origin,angles)
+		local allplayers = player.GetAll()
+		local tr = util.TraceHull({
+			start = origin,
+			endpos = origin +angles:Forward() *-math.max(ply.VJ_ZS_Scroll,self:BoundingRadius()),
+			mask = MASK_SHOT,
+			filter = allplayers,
+			mins = ViewHullMins,
+			maxs = ViewHullMaxs
+		})
+		return tr.HitPos +tr.HitNormal *5
 	end
 
 	function PLY:VJ_GetAmmoTypes()
@@ -308,9 +448,11 @@ if VJExists == true then
 
 	VJ.AddClientConVar("vj_zs_music_volume",50)
 	VJ.AddClientConVar("vj_zs_musicset",1)
+	VJ.AddClientConVar("vj_zs_beat_multi",1)
 	VJ.AddClientConVar("vj_zs_forcesong",0)
 	VJ.AddClientConVar("vj_zs_forcesong_a",1)
 	VJ.AddClientConVar("vj_zs_forcesong_b",1)
+	VJ.AddClientConVar("vj_zs_forcesong_c",1)
 	VJ.AddClientConVar("vj_zs_vo",1)
 	VJ.AddClientConVar("vj_zs_zombieclass",0) -- 0 = Default/Random
 	VJ.AddConVar("vj_zs_difficulty",1) -- Increases the multiplier for the amount of zombies that can spawn
@@ -339,36 +481,51 @@ if VJExists == true then
 
 	if CLIENT then
 		language.Add("vjbase.zs_class.random","Random Class")
-		language.Add("vjbase.zs_class.zombie","Zombie")
-		language.Add("vjbase.zs_class.ghoul","Ghoul")
-		language.Add("vjbase.zs_class.zombie_torso","Zombie Torso")
-		language.Add("vjbase.zs_class.headcrab","Headcrab")
-		language.Add("vjbase.zs_class.fast_zombie","Fast Zombie")
-		language.Add("vjbase.zs_class.fast_headcrab","Fast Headcrab")
-		language.Add("vjbase.zs_class.wraith_old","Wraith")
-		language.Add("vjbase.zs_class.mailed_zombie","Mailed Zombie")
-		language.Add("vjbase.zs_class.wraith","Wraith (Stalker)")
-		language.Add("vjbase.zs_class.wraithcrab","Wraithcrab")
-		language.Add("vjbase.zs_class.poison_headcrab","Poison Headcrab")
-		language.Add("vjbase.zs_class.draggy","Drifter")
-		language.Add("vjbase.zs_class.burnzie","Burnzie")
-		language.Add("vjbase.zs_class.poison_zombie","Poison Zombie")
-		language.Add("vjbase.zs_class.zombine","Zombine")
-		language.Add("vjbase.zs_class.chem_zombie","Chem Zombie")
+		language.Add("vjbase.zs_class.zombie","[1] Zombie")
+		language.Add("vjbase.zs_class.ghoul","[2] Ghoul")
+		language.Add("vjbase.zs_class.zombie_torso","[2] Zombie Torso")
+		language.Add("vjbase.zs_class.headcrab","[2] Headcrab")
+		language.Add("vjbase.zs_class.fast_zombie","[3] Fast Zombie")
+		language.Add("vjbase.zs_class.fast_headcrab","[3] Fast Headcrab")
+		language.Add("vjbase.zs_class.wraith_old","[3] Wraith")
+		language.Add("vjbase.zs_class.mailed_zombie","[4] Mailed Zombie")
+		language.Add("vjbase.zs_class.howler","[4] Howler")
+		language.Add("vjbase.zs_class.wraith","[5] Wraith (Stalker)")
+		language.Add("vjbase.zs_class.wraithcrab","[5] Wraithcrab")
+		language.Add("vjbase.zs_class.poison_headcrab","[6] Poison Headcrab")
+		language.Add("vjbase.zs_class.draggy","[6] Drifter")
+		language.Add("vjbase.zs_class.burnzie","[7] Burnzie")
+		language.Add("vjbase.zs_class.poison_zombie","[7] Poison Zombie")
+		language.Add("vjbase.zs_class.zombine","[7] Zombine")
+		language.Add("vjbase.zs_class.chem_zombie","[8] Chem Zombie")
+
+		language.Add("vjbase.zs_track.gmod11","[1] Garry's Mod 11")
+		language.Add("vjbase.zs_track.gmod13","[2] Garry's Mod 13")
+		language.Add("vjbase.zs_track.mrgreen","[3] Mr. Green")
 
 		hook.Add("PopulateToolMenu", "VJ_ADDTOMENU_ZS_CLIENT", function()
 			spawnmenu.AddToolMenuOption("DrVrej", "SNPC Configures", "Zombie Survival - Client", "Zombie Survival - Client", "", "", function(Panel)
 				Panel:AddControl( "Label", {Text = "You are not an admin!"})
-				Panel:AddControl("Slider", {Label = "Music Volume", Command = "vj_zs_music_volume", Type = "Float", Min = 0, Max = 100})
-				Panel:AddControl("Slider", { Label 	= "Music Set", Command = "vj_zs_musicset", Type = "Float", Min = 1, Max = 2})
-				Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST)")
+				Panel:AddControl("Slider", {Label = "Music Volume", Command = "vj_zs_music_volume", Min = 0, Max = 100})
+				
+				local vj_zs_musicset = {Options = {}, CVars = {}, Label = "Select Music Set", MenuButton = "0"}
+				vj_zs_musicset.Options["#vjbase.zs_track.gmod11"] = {vj_zs_musicset = "1"}
+				vj_zs_musicset.Options["#vjbase.zs_track.gmod13"] = {vj_zs_musicset = "2"}
+				vj_zs_musicset.Options["#vjbase.zs_track.mrgreen"] = {vj_zs_musicset = "3"}
+				Panel:AddControl("ComboBox",vj_zs_musicset)
+				
+				-- Panel:AddControl("Slider", { Label 	= "Music Set", Command = "vj_zs_musicset", Min = 1, Max = 3})
+				-- Panel:ControlHelp("Music Set - (1 = GMod 11 OST | 2 = GMod 13 OST | 3 = Mr. Green OST)")
+				
+				Panel:AddControl("Slider", { Label 	= "Beat Req. Multiplier", Command = "vj_zs_beat_multi", Min = 1, Max = 5})
 				Panel:AddControl("Checkbox", { Label = "Force Specific Track?", Command = "vj_zs_forcesong"})
-				Panel:AddControl("Slider", { Label 	= "Force Track (Set 1)", Command = "vj_zs_forcesong_a", Type = "Float", Min = 1, Max = 8})
-				Panel:AddControl("Slider", { Label 	= "Force Track (Set 2)", Command = "vj_zs_forcesong_b", Type = "Float", Min = 1, Max = 10})
-				Panel:ControlHelp("Notice: The numbers round up in the code, you don't have to force whole numbers")
+				Panel:AddControl("Slider", { Label 	= "Force Track (Set 1)", Command = "vj_zs_forcesong_a", Min = 1, Max = 8})
+				Panel:AddControl("Slider", { Label 	= "Force Track (Set 2)", Command = "vj_zs_forcesong_b", Min = 1, Max = 10})
+				Panel:AddControl("Slider", { Label 	= "Force Track (Set 3)", Command = "vj_zs_forcesong_c", Min = 1, Max = 9})
 				Panel:AddControl("Checkbox", { Label = "Enable VO", Command = "vj_zs_vo"})
 
 				Panel:ControlHelp("Notice: If chosen class isn't unlocked, a random one will be assigned!")
+				Panel:ControlHelp("Key: [Wave Requirement] Class Name")
 				local vj_zs_class = {Options = {}, CVars = {}, Label = "Select Zombie Class", MenuButton = "0"}
 				vj_zs_class.Options["#vjbase.zs_class.random"] = {vj_zs_zombieclass = "0"}
 				vj_zs_class.Options["#vjbase.zs_class.zombie"] = {vj_zs_zombieclass = "1"}
@@ -379,14 +536,15 @@ if VJExists == true then
 				vj_zs_class.Options["#vjbase.zs_class.fast_headcrab"] = {vj_zs_zombieclass = "6"}
 				vj_zs_class.Options["#vjbase.zs_class.wraith_old"] = {vj_zs_zombieclass = "7"}
 				vj_zs_class.Options["#vjbase.zs_class.mailed_zombie"] = {vj_zs_zombieclass = "8"}
-				vj_zs_class.Options["#vjbase.zs_class.wraith"] = {vj_zs_zombieclass = "9"}
-				vj_zs_class.Options["#vjbase.zs_class.wraithcrab"] = {vj_zs_zombieclass = "10"}
-				vj_zs_class.Options["#vjbase.zs_class.poison_headcrab"] = {vj_zs_zombieclass = "11"}
-				vj_zs_class.Options["#vjbase.zs_class.draggy"] = {vj_zs_zombieclass = "12"}
-				vj_zs_class.Options["#vjbase.zs_class.burnzie"] = {vj_zs_zombieclass = "13"}
-				vj_zs_class.Options["#vjbase.zs_class.poison_zombie"] = {vj_zs_zombieclass = "14"}
-				vj_zs_class.Options["#vjbase.zs_class.zombine"] = {vj_zs_zombieclass = "15"}
-				vj_zs_class.Options["#vjbase.zs_class.chem_zombie"] = {vj_zs_zombieclass = "16"}
+				vj_zs_class.Options["#vjbase.zs_class.howler"] = {vj_zs_zombieclass = "9"}
+				vj_zs_class.Options["#vjbase.zs_class.wraith"] = {vj_zs_zombieclass = "10"}
+				vj_zs_class.Options["#vjbase.zs_class.wraithcrab"] = {vj_zs_zombieclass = "11"}
+				vj_zs_class.Options["#vjbase.zs_class.poison_headcrab"] = {vj_zs_zombieclass = "12"}
+				vj_zs_class.Options["#vjbase.zs_class.draggy"] = {vj_zs_zombieclass = "13"}
+				vj_zs_class.Options["#vjbase.zs_class.burnzie"] = {vj_zs_zombieclass = "14"}
+				vj_zs_class.Options["#vjbase.zs_class.poison_zombie"] = {vj_zs_zombieclass = "15"}
+				vj_zs_class.Options["#vjbase.zs_class.zombine"] = {vj_zs_zombieclass = "16"}
+				vj_zs_class.Options["#vjbase.zs_class.chem_zombie"] = {vj_zs_zombieclass = "17"}
 				Panel:AddControl("ComboBox",vj_zs_class)
 			end, {})
 		end)
@@ -405,10 +563,10 @@ if VJExists == true then
 					Panel:AddControl("Checkbox", {Label = "Free Classes", Command = "vj_zs_freezombies"})
 					Panel:AddControl("Checkbox", {Label = "Allow Player Zombies?", Command = "vj_zs_allowplayerzombies"})
 					Panel:AddControl("Checkbox", {Label = "Become Zombies on Death?", Command = "vj_zs_becomezombies"})
-					Panel:AddControl("Slider", { Label 	= "Wave Time", Command = "vj_zs_wavetime", Type = "Float", Min = 5, Max = 720})
-					Panel:AddControl("Slider", { Label 	= "Intermission Time", Command = "vj_zs_intermissiontime", Type = "Float", Min = 5, Max = 120})
-					Panel:AddControl("Slider", { Label 	= "Difficulty (Influcenes Max Zombies)", Command = "vj_zs_difficulty", Type = "Float", Min = 1, Max = 100})
-					Panel:AddControl("Slider", { Label 	= "Max Zombies", Command = "vj_zs_maxzombies", Type = "Float", Min = 10, Max = 600})
+					Panel:AddControl("Slider", { Label 	= "Wave Time", Command = "vj_zs_wavetime", Min = 10, Max = 720})
+					Panel:AddControl("Slider", { Label 	= "Intermission Time", Command = "vj_zs_intermissiontime", Min = 15, Max = 180})
+					Panel:AddControl("Slider", { Label 	= "Difficulty (Influcenes Max Zombies)", Command = "vj_zs_difficulty", Min = 1, Max = 75})
+					Panel:AddControl("Slider", { Label 	= "Max Zombies", Command = "vj_zs_maxzombies", Min = 10, Max = 600})
 			end,{})
 		end)
 	end

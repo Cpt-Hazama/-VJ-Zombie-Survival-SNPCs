@@ -14,6 +14,9 @@ SWEP.SlotPos					= 4 -- Which part of that slot do you want the SWEP to be in? (
 SWEP.SwayScale 					= 1 -- Default is 1, The scale of the viewmodel sway
 SWEP.UseHands					= true
 end
+	-- NPC Settings ---------------------------------------------------------------------------------------------------------------------------------------------
+SWEP.NPC_NextPrimaryFire 		= 0.25 -- Next time it can use primary fire
+SWEP.NPC_CustomSpread	 		= 0.8
 	-- Main Settings ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.ViewModel					= "models/weapons/cstrike/c_pist_p228.mdl"
 SWEP.WorldModel					= "models/weapons/w_pist_p228.mdl"

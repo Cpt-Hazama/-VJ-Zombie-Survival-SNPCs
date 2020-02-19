@@ -1,0 +1,11 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/cpthazama/zombiesurvival/howler/zj_diffuse"
+	"$bumpmap" "models/cpthazama/zombiesurvival/howler/zj_normal"
+	"$normalmapalphaenvmapmask" 	1
+	"$phong"			1
+	"$halflambert"			 1
+	"$phongboost"			0.7
+	"$phongexponent"		"8"
+	"$phongfresnelranges"		"[0.05 0.5 1]"
+}

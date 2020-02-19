@@ -123,12 +123,19 @@ function ENT:CustomOnThink()
 	if IsValid(self:GetEnemy()) then
 		enemy = self:GetEnemy()
 		dist = self:VJ_GetNearestPointToEntityDistance(enemy)
+		if enemy.VJ_ZS_IsZombie then
+			self:AddEntityRelationship(enemy,D_LI,99)
+			table.insert(self.VJ_AddCertainEntityAsFriendly,enemy)
+			self:AddEntityRelationship(enemy,D_LI,99)
+			self:SetEnemy(NULL)
+		end
 		if dist <= 300 && dist > 100 && self:Visible(enemy) && (self:GetForward():Dot((enemy:GetPos() - self:GetPos()):GetNormalized()) > math.cos(math.rad(65))) then
 			if onGround && !self.LeftGround && CurTime() > self.NextFZLeapT then
 				self:EmitSound(VJ_PICKRANDOMTABLE(self.SoundTbl_BeforeRangeAttack),85,100)
 				self:SetGroundEntity(NULL)
 				self:SetPos(self:GetPos() +Vector(0,0,2))
-				self:SetVelocity(self:GetPos() +self:GetUp() *250 +self:GetForward() *1200)
+				-- self:SetVelocity(self:GetPos() +self:GetForward() *950 +self:GetUp() *150)
+				self:SetVelocity(((self:GetEnemy():GetPos() +self:OBBCenter()) -(self:GetPos() +self:OBBCenter())):GetNormal() *950 +self:GetUp() *300)
 				self.LeftGround = true
 				self.NextFZLeapT = CurTime() +999999999
 			end

@@ -118,6 +118,12 @@ function ENT:CustomOnThink()
 	if IsValid(self:GetEnemy()) then
 		enemy = self:GetEnemy()
 		dist = self:VJ_GetNearestPointToEntityDistance(enemy)
+		if enemy.VJ_ZS_IsZombie then
+			self:AddEntityRelationship(enemy,D_LI,99)
+			table.insert(self.VJ_AddCertainEntityAsFriendly,enemy)
+			self:AddEntityRelationship(enemy,D_LI,99)
+			self:SetEnemy(NULL)
+		end
 		if CurTime() > self.NextTPT && dist < 600 && self:Visible(enemy) then
 			self.NextTPT = CurTime() +15
 			local oldPos = self:GetPos()

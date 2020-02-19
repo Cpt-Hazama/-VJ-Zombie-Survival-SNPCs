@@ -6,7 +6,7 @@ SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/zombine.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/zombine.mdl"
 SWEP.ZHealth					= 400
 SWEP.ZSpeed						= 140
-SWEP.ZSpeedRage					= 190
+SWEP.ZSpeedRage					= 280
 SWEP.ZSteps 					= {"npc/zombine/gear1.wav","npc/zombine/gear2.wav","npc/zombine/gear3.wav"}
 SWEP.ZStepTime 					= 500
 SWEP.ViewModelFOV				= 60
@@ -70,6 +70,51 @@ function SWEP:Reload()
 	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
+	local animIdle = ACT_IDLE
+	local animMove = ACT_WALK
+	local animAttack = ACT_MELEE_ATTACK1
+	
+	if self.RageState then
+		-- animMove = ACT_RUN_STIMULATED
+	end
+
+	local ply = self.Owner
+	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
+	local data = {}
+	local act = animIdle
+	local ppx = 0
+	local ppy = 0
+	local noPresses = false
+	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
+		act = animIdle
+	else
+		if lmb then
+			act = animAttack
+		elseif keys.w or keys.a or keys.s or keys.d then
+			act = animMove
+		end
+	end
+
+	if keys.w then
+		ppy = 1
+	elseif keys.a then
+		ppx = -1
+	elseif keys.s then
+		ppy = -1
+	elseif keys.d then
+		ppx = 1
+	else
+		ppx = 0
+		ppy = 0
+	end
+
+	data.sequence = act
+	data.movex = ppx
+	data.movey = ppy
+	return data
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:AttackAnim(tbl)
 	self:SendWeaponAnim(VJ_PICK(tbl))
 	if IsValid(self:GetOwner():GetViewModel()) then
@@ -94,7 +139,7 @@ function SWEP:SecondaryAttack()
 		timer.Simple(0.6,function()
 			if IsValid(self) then
 				local grenent = ents.Create("npc_grenade_frag")
-				local att = self.Owner:GetAttachment(self.Owner:LookupAttachment("anim_attachment_LH"))
+				local att = self.Owner:GetAttachment(self.Owner:LookupAttachment("grenade_attachment"))
 				local pos = nil
 				local ang = nil
 				if att == nil then
@@ -109,7 +154,7 @@ function SWEP:SecondaryAttack()
 				grenent:SetAngles(ang)
 				grenent:SetOwner(self.Owner)
 				grenent:SetParent(self.Owner)
-				grenent:Fire("SetParentAttachment","anim_attachment_LH")
+				grenent:Fire("SetParentAttachment","grenade_attachment")
 				grenent:Spawn()
 				grenent:Activate()
 				grenent:Input("SetTimer",self.Owner,self.Owner,3.5)
@@ -184,11 +229,12 @@ function SWEP:CustomOnThink()
 	if self.RageState then
 		self.Owner:SetRunSpeed(self.ZSpeedRage)
 		self.Owner:SetWalkSpeed(self.ZSpeedRage)
+		self.ZStepTime = 350
 	else
 		self.Owner:SetRunSpeed(self.ZSpeed)
 		self.Owner:SetWalkSpeed(self.ZSpeed)
 	end
-	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel); self.Owner.VJ_NPC_Class = {"CLASS_ZOMBIE"} end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
 		table.Empty(self.Owner.VJ_NPC_Class)
@@ -216,7 +262,7 @@ function SWEP:PainSound()
 	if self.Owner:Health() <= 60 && !self.RageState then
 		self.RageState = true
 		snd = "npc/zombine/zombine_alert6.wav"
-		self:EmitSound(snd,90,100)
+		self.Owner:EmitSound(snd,95,100)
 	end
 	self.NextMoanT = CurTime() +SoundDuration(snd) +math.Rand(0.5,1)
 end

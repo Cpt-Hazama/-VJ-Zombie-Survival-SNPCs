@@ -50,6 +50,47 @@ function SWEP:PrimaryAttack()
 	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
+	local animIdle = ACT_IDLE
+	local animMove = ACT_WALK
+	local animAttack = ACT_MELEE_ATTACK1
+
+	local ply = self.Owner
+	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
+	local data = {}
+	local act = animIdle
+	local ppx = 0
+	local ppy = 0
+	local noPresses = false
+	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
+		act = animIdle
+	else
+		if lmb then
+			act = animAttack
+		elseif keys.w or keys.a or keys.s or keys.d then
+			act = animMove
+		end
+	end
+
+	if keys.w then
+		ppy = 1
+	elseif keys.a then
+		ppx = -1
+	elseif keys.s then
+		ppy = -1
+	elseif keys.d then
+		ppx = 1
+	else
+		ppx = 0
+		ppy = 0
+	end
+
+	data.sequence = act
+	data.movex = ppx
+	data.movey = ppy
+	return data
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:Reload()
 	return false
 end
@@ -69,7 +110,7 @@ function SWEP:CustomOnThink()
 	end
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
-	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel); self.Owner.VJ_NPC_Class = {"CLASS_ZOMBIE"} end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
 		self.Owner.VJ_NPC_Class = {"CLASS_PLAYER_ALLY"}
 		table.Empty(self.Owner.VJ_NPC_Class)

@@ -1,0 +1,5 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/cpthazama/zombiesurvival/howler/eye"
+	"$selfillum"	 1
+}

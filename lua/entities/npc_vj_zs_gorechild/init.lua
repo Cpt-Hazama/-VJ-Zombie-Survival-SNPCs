@@ -116,6 +116,12 @@ function ENT:CustomOnThink()
 	if IsValid(self:GetEnemy()) then
 		enemy = self:GetEnemy()
 		dist = self:VJ_GetNearestPointToEntityDistance(enemy)
+		if enemy.VJ_ZS_IsZombie then
+			self:AddEntityRelationship(enemy,D_LI,99)
+			table.insert(self.VJ_AddCertainEntityAsFriendly,enemy)
+			self:AddEntityRelationship(enemy,D_LI,99)
+			self:SetEnemy(NULL)
+		end
 		if self.ZS_BossBaby then
 			if self:Visible(enemy) && dist <= 500 && dist > 200 && CurTime() > self.NextBabyThrowT then
 				self:VJ_ACT_PLAYACTIVITY("vjges_zombie_attack_0" .. math.random(1,6),true,false,true)

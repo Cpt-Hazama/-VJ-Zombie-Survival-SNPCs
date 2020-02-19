@@ -2,18 +2,21 @@ if (!file.Exists("autorun/vj_base_autorun.lua","LUA")) then return end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 	-- ZS Settings --
 SWEP.PrintName					= "Poison Headcrab"
-SWEP.ViewModel					= "models/error.mdl"
+SWEP.ViewModel					= "models/cpthazama/zombiesurvival/weapons/poisonheadcrab.mdl"
 SWEP.ZombieModel				= "models/cpthazama/zombiesurvival/poisonheadcrab.mdl"
 SWEP.ZHealth					= 30
 SWEP.ZSpeed						= 180
 SWEP.ZHull 						= {x=10,y=10,z=8,d=8}
-SWEP.ViewModelFOV				= 70
+SWEP.ZSteps 					= {"npc/headcrab_poison/ph_step1.wav","npc/headcrab_poison/ph_step2.wav","npc/headcrab_poison/ph_step3.wav","npc/headcrab_poison/ph_step4.wav"}
+SWEP.ZStepVolume 				= 40
+SWEP.ZStepTime 					= 200
+SWEP.ViewModelFOV				= 60
 SWEP.BobScale 					= 0.4
 SWEP.SwayScale 					= 0.2
 SWEP.Damage 					= 4
 local attackSpeed 				= 1
 local animDelay 				= 3.5
-SWEP.Primary.Sound				= {"npc/headcrab_poison/ph_scream1.wav","npc/headcrab_poison/ph_scream2.wav","npc/headcrab_poison/ph_scream3.wav"}
+SWEP.AttackSound				= {"npc/headcrab_poison/ph_scream1.wav","npc/headcrab_poison/ph_scream2.wav","npc/headcrab_poison/ph_scream3.wav"}
 SWEP.PainSounds 				= {"npc/headcrab_poison/ph_pain1.wav","npc/headcrab_poison/ph_pain2.wav","npc/headcrab_poison/ph_pain3.wav","npc/headcrab_poison/ph_wallpain1.wav","npc/headcrab_poison/ph_wallpain2.wav","npc/headcrab_poison/ph_wallpain3.wav"}
 SWEP.AnimTbl_PrimaryFire		= {}
 ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -56,23 +59,71 @@ function SWEP:Reload()
 	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
+	local animIdle = ACT_IDLE
+	local animMove = self.Owner:GetSequenceActivity(self.Owner:LookupSequence("Scurry"))
+	local animAttack = ACT_MELEE_ATTACK1
+
+	local ply = self.Owner
+	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
+	local data = {}
+	local act = animIdle
+	local ppx = 0
+	local ppy = 0
+	local noPresses = false
+	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
+		act = animIdle
+	else
+		if lmb then
+			act = animAttack
+		elseif keys.w or keys.a or keys.s or keys.d then
+			act = animMove
+		end
+	end
+
+	if keys.w then
+		ppy = 1
+	elseif keys.a then
+		ppx = -1
+	elseif keys.s then
+		ppy = -1
+	elseif keys.d then
+		ppx = 1
+	else
+		ppx = 0
+		ppy = 0
+	end
+
+	data.sequence = act
+	data.movex = ppx
+	data.movey = ppy
+	return data
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.HasHit = false
 SWEP.LastAttackT = 0
 function SWEP:CustomOnPrimaryAttack_BeforeShoot()
+	if !self.Owner:IsOnGround() then return end
 	if (CLIENT) then return end
 	self.Owner:Freeze(true)
+	timer.Simple(1,function()
+		if IsValid(self) then
+			self:SendWeaponAnim(ACT_VM_HITCENTER)
+		end
+	end)
 	timer.Simple(1.5,function()
 		if IsValid(self) then
+			self.Owner:EmitSound("npc/headcrab_poison/ph_jump" .. math.random(1,3) .. ".wav",75,100)
 			self.Owner:ViewPunch(Angle(8,0,0))
 			self.Owner:SetGroundEntity(NULL)
-			self.Owner:SetVelocity(self.Owner:GetForward() *500 +self.Owner:GetUp() *200)
+			self.Owner:SetVelocity(self.Owner:GetForward() *500 +self.Owner:GetUp() *300)
 			self.Owner:Fire("IgnoreFallDamage","",0)
 			self.LastAttackT = CurTime() +2.5
 			self.HasHit = false
 			self.Owner:Freeze(false)
 		end
 	end)
-	self:EmitSound(VJ_PICK(self.Primary.Sound),80,100)
+	self:EmitSound(VJ_PICK(self.AttackSound),80,100)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.NextRangeT = CurTime()
@@ -81,7 +132,13 @@ function SWEP:SecondaryAttack()
 		if (CLIENT) then return end
 		self.Owner:Freeze(true)
 		self:EmitSound("npc/headcrab_poison/ph_scream"..math.random(1,3)..".wav",75,100)
-		timer.Simple(1.5,function()
+		self:SendWeaponAnim(ACT_VM_SECONDARYATTACK)
+		timer.Simple(1.8,function()
+			if IsValid(self) then
+				self:DoIdleAnimation()
+			end
+		end)
+		timer.Simple(1.3,function()
 			if IsValid(self) then
 				self.Owner:Freeze(false)
 				local spit = ents.Create("obj_vj_zs_headcrabspit")
@@ -106,17 +163,13 @@ function SWEP:ThrowCode(TheProjectile)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnThink()
-	if IsValid(self.Owner:GetViewModel()) then
-		local vm = self.Owner:GetViewModel()
-		vm:SetNoDraw(true)
-	end
 	if self.Owner:GetViewOffset().z != 8 then
 		self.Owner:SetViewOffset(Vector(0,0,8))
 		self.Owner:SetViewOffsetDucked(Vector(0,0,8))
 	end
 	self.Owner:SetRunSpeed(self.ZSpeed)
 	self.Owner:SetWalkSpeed(self.ZSpeed)
-	if SERVER then self:GetOwner():SetModel(self.ZombieModel) end
+	if SERVER then self:GetOwner():SetModel(self.ZombieModel); self.Owner.VJ_NPC_Class = {"CLASS_ZOMBIE"} end
 	if self:GetVelocity().z > 5 && CurTime() < self.LastAttackT then
 		if !self.HasHit then
 			local tr = util.TraceHull({
