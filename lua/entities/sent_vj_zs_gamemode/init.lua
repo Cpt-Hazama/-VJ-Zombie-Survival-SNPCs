@@ -716,7 +716,9 @@ function ENT:SpawnBoss()
 	for _,v in pairs(self.ZombieClasses) do
 		table.insert(z.EntitiesToNoCollide,v)
 	end
-	self:PlayerNWSound(v,"cpt_zs/mrgreen/beep22.wav")
+	for _,v in pairs(player.GetAll()) do
+		self:PlayerNWSound(v,"cpt_zs/mrgreen/beep22.wav")
+	end
 	self:PlayerMsg("A new Boss zombie has been spotted!")
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
