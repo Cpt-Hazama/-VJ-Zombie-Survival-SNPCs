@@ -129,13 +129,13 @@ function ENT:SetUpBeats(v)
 		max = 9
 		dir = "cpt_zs/mrgreen/hbeat"
 		local tblGreen = {
-			"cpt_zs/music/mrgreen/deadlife.wav",
-			"cpt_zs/music/mrgreen/deadlife_insane.wav",
-			"cpt_zs/music/mrgreen/lasthuman.wav",
-			"cpt_zs/music/mrgreen/bosstheme1.wav",
-			"cpt_zs/music/mrgreen/bosstheme2.wav",
-			"cpt_zs/music/mrgreen/bosstheme3.wav",
-			"cpt_zs/music/mrgreen/bosstheme4.wav",
+			"cpt_zs/mrgreen/deadlife.wav",
+			"cpt_zs/mrgreen/deadlife_insane.wav",
+			"cpt_zs/mrgreen/lasthuman.wav",
+			"cpt_zs/mrgreen/bosstheme1.wav",
+			"cpt_zs/mrgreen/bosstheme2.wav",
+			"cpt_zs/mrgreen/bosstheme3.wav",
+			"cpt_zs/mrgreen/bosstheme4.wav",
 		}
 		lasthuman = VJ_PICK(tblGreen)
 	end
