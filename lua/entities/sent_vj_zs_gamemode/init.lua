@@ -208,12 +208,22 @@ function ENT:Initialize()
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:ObtainWaveWeapon(ent,wave)
+	if !self.EnforceWeapons then return end
 	local wep = VJ_PICK(self.PlayerWeapons[wave])
 	ent.VJ_CanBePickedUpWithOutUse = true
 	ent.VJ_CanBePickedUpWithOutUse_Class = wep
 	ent:Give(wep)
 	-- ent:EmitSound("weapons/physcannon/physcannon_charge.wav",45,100)
 	ent:ChatPrint("Unlocked new weapon!")
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:ObtainWaveWeapon_Bot(ent,wave)
+	if !self.EnforceWeapons then return end
+	local wep = VJ_PICK(self.PlayerWeapons[wave])
+	if wave == 0 then wep = "weapon_vj_9mmpistol" end
+	if IsValid(ent:GetActiveWeapon()) then ent:GetActiveWeapon():Remove() end
+	ent:Give(wep)
+	ent:SetupHoldtypes(ent:GetActiveWeapon(),ent:GetActiveWeapon().HoldType)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:EnforceStarterWeapons()
@@ -665,6 +675,9 @@ function ENT:SetWave(num)
 		if v:Alive() && !v.VJ_ZS_IsZombie then
 			self:ObtainWaveWeapon(v,num)
 		end
+	end
+	for _,v in pairs(ents.FindByClass("npc_vj_hzs_bot")) do
+		self:ObtainWaveWeapon_Bot(v,num)
 	end
 	if math.random(1,self.BossChance) == 1 then
 		self.BossRound = true

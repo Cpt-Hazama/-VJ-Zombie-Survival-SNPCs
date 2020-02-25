@@ -129,6 +129,7 @@ if VJExists == true then
 		hook.Add("PlayerSpawn","VJ_ZS_PlayerHull",function(ply)
 			local resetHull = true
 			ply.VJ_ZS_SetHull = false
+			ply.VJ_ZS_IsGhosting = false
 			ply:ResetHull()
 			ply:SetNWInt("VJ_ZS_Scroll",0)
 			ply.VJ_ZS_Scroll = 0
@@ -174,6 +175,44 @@ if VJExists == true then
 					end
 				end
 			end)
+
+			local matGlow = Material("Sprites/light_glow02_add_noz")
+			local colHealthEmpty = Color(255,0,0,255)
+			local colHealthFull = Color(20,255,20,255)
+			local colHealth = Color(255,255,255)
+			local HeartBeatTime = 0
+			hook.Add("PostDrawTranslucentRenderables","VJ_ZS_HeartBeats",function() -- Credits to JetBoom
+				if !LocalPlayer():GetNWBool("VJ_ZS_IsZombie") then return end
+
+				HeartBeatTime = HeartBeatTime +(4 +(0.1) *5) *FrameTime()
+
+				local eyepos = EyePos()
+				local range = 2048 *2048
+				local dist, healthfrac, pos, size
+				local entities = ents.FindInSphere(LocalPlayer():GetPos(),range)
+				for _,ent in pairs(entities) do
+					if ent:IsPlayer() or ent:IsNPC() then
+						local isZombieNPC = ent:IsNPC() && string.find(ent:GetClass(),"npc_vj_zs_")
+						local isZombie = ent:IsPlayer() && ent:GetNWBool("VJ_ZS_IsZombie")
+						dist = ent:GetPos():DistToSqr(eyepos)
+						if ent != LocalPlayer() && ent:Health() > 0 && dist <= range && !isZombie && !isZombieNPC then
+							healthfrac = math.Max(ent:Health(),0) /ent:GetMaxHealth()
+							colHealth.r = math.Approach(colHealthEmpty.r,colHealthFull.r,math.abs(colHealthEmpty.r -colHealthFull.r) *healthfrac)
+							colHealth.g = math.Approach(colHealthEmpty.g,colHealthFull.g,math.abs(colHealthEmpty.g -colHealthFull.g) *healthfrac)
+							colHealth.b = math.Approach(colHealthEmpty.b,colHealthFull.b,math.abs(colHealthEmpty.b -colHealthFull.b) *healthfrac)
+							pos = ent:WorldSpaceCenter()
+
+							render.SetMaterial(matGlow)
+							render.DrawSprite(pos,13,13,colHealth)
+							size = math.sin(HeartBeatTime +ent:EntIndex()) *50 -21
+							if size > 0 then
+								render.DrawSprite(pos,size *1.5,size,colHealth)
+								render.DrawSprite(pos,size,size *1.5,colHealth)
+							end
+						end
+					end
+				end
+			end)
 		end
 
 	hook.Add("ShouldDrawLocalPlayer","VJ_ZS_DrawZombie",function(ply)
@@ -196,14 +235,23 @@ if VJExists == true then
 		hook.Add("Tick","VJ_ZS_TickHull",function()
 			local plys = player.GetAll()
 			for _,ply in pairs(plys) do
+				ply:VJ_ZS_SetGhosting(ply:KeyDown(IN_WALK))
 				if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
 					local wep = ply:GetActiveWeapon()
 					local hull = wep.ZHull
-					-- print("CHANGING")
 					ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
 					ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
 				end
 			end
+		end)
+		
+		hook.Add("ShouldCollide","VJ_ZS_Collide",function(ent1,ent2)
+			if ent1:IsPlayer() && !ent1.VJ_ZS_IsZombie then
+				if ent1.VJ_ZS_IsGhosting && (ent2:GetClass() == "prop_physics" or ent2:GetClass() == "sent_vj_board" or ent2:GetClass() == "prop_physics_multiplayer") then
+					return false
+				end
+			end
+			return true
 		end)
 	end
 	-- end
@@ -222,7 +270,7 @@ if VJExists == true then
 		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZSteps then
 			local tbl = ent:GetActiveWeapon().ZSteps
 			if tbl == false then return true end
-			ent:EmitSound(VJ_PICK(tbl),ent:GetActiveWeapon().ZStepVolume or vol,ent:GetActiveWeapon().ZStepPitch or 100)
+			ent:EmitSound(VJ_PICK(tbl),ent:GetActiveWeapon().ZStepVolume or math.random(50,65),ent:GetActiveWeapon().ZStepPitch or 100)
 			return true
 		end
 	end)
@@ -301,6 +349,32 @@ if VJExists == true then
 		self.VJ_CanBePickedUpWithOutUse = true
 		self.VJ_CanBePickedUpWithOutUse_Class = wep
 		self:Give(wep)
+	end
+
+	function PLY:VJ_ZS_SetGhosting(bool)
+		if self.VJ_ZS_IsZombie then self.VJ_ZS_IsGhosting = false return end
+		
+		local function CanRun()
+			local run = false
+			for _,v in pairs(ents.FindByClass("sent_vj_zs_gamemode")) do
+				if v then run = true break end
+			end
+			return run
+		end
+
+		if !CanRun() then return end
+		
+		local noCollide = COLLISION_GROUP_WORLD
+		if self:GetCollisionGroup() != noCollide then
+			self.VJ_ZS_OldCollisionGroup = self:GetCollisionGroup()
+		end
+		self.VJ_ZS_IsGhosting = bool
+		self:SetCustomCollisionCheck(bool)
+		if bool then
+			self:SetCollisionGroup(noCollide)
+		else
+			self:SetCollisionGroup(self.VJ_ZS_OldCollisionGroup)
+		end
 	end
 
 	function PLY:VJ_ZS_Howled(iIntensity)
