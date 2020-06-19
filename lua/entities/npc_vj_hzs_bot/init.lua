@@ -27,14 +27,6 @@ ENT.BecomeEnemyToPlayerLevel = 5
 ENT.HasCallForHelpAnimation = false
 ENT.AnimTbl_CallForHelp = {0}
 ENT.CallForBackUpOnDamageAnimation = {0}
-ENT.AnimTbl_TakingCover = {0}
-ENT.AnimTbl_MoveToCover = {0}
-ENT.AnimTbl_MoveOrHideOnDamageByEnemy = {0}
-ENT.AnimTbl_AlertFriendsOnDeath = {0}
-ENT.AnimTbl_WeaponAttackCrouch = {0}
-ENT.AnimTbl_WeaponReloadBehindCover = {0}
-ENT.AnimTbl_ScaredBehaviorStand = {ACT_IDLE}
-ENT.AnimTbl_ScaredBehaviorMovement = {ACT_RUN}
 
 ENT.SoundTbl_FootStep = {
 	"player/footsteps/concrete1.wav",
@@ -170,12 +162,211 @@ function ENT:CustomOnInitialize()
 	self:DecideName()
 	self.NextIdleChatT = CurTime() +10
 	self.NextCombatChatT = CurTime() +2
+	self.CurrentHoldType = "none"
+	self.CurrentFireType = 1
 	PrintMessage(HUD_PRINTTALK,self:GetName() .. " has connected")
-	timer.Simple(0.1,function()
-		if IsValid(self) && IsValid(self:GetActiveWeapon()) then
-			self:SetupHoldtypes(self:GetActiveWeapon(),self:GetActiveWeapon().HoldType)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:SetAnimData(idle,crouch,crouch_move,walk,run,fire,reload,jump)
+	if type(idle) == "string" then idle = VJ_SequenceToActivity(self,idle) end
+	if type(crouch) == "string" then crouch = VJ_SequenceToActivity(self,crouch) end
+	if type(crouch_move) == "string" then crouch_move = VJ_SequenceToActivity(self,crouch_move) end
+	if type(walk) == "string" then walk = VJ_SequenceToActivity(self,walk) end
+	if type(run) == "string" then run = VJ_SequenceToActivity(self,run) end
+	if type(fire) == "string" then fire = VJ_SequenceToActivity(self,fire) end
+	if type(reload) == "string" then reload = VJ_SequenceToActivity(self,reload) end
+	if type(jump) == "string" then jump = VJ_SequenceToActivity(self,jump) end
+
+	self.WeaponAnimTranslations[ACT_IDLE] 							= idle
+	self.WeaponAnimTranslations[ACT_WALK] 							= walk
+	self.WeaponAnimTranslations[ACT_RUN] 							= run
+	self.WeaponAnimTranslations[ACT_IDLE_ANGRY] 					= idle
+	self.WeaponAnimTranslations[ACT_WALK_AIM] 						= walk
+	self.WeaponAnimTranslations[ACT_WALK_CROUCH] 					= crouch_move
+	self.WeaponAnimTranslations[ACT_WALK_CROUCH_AIM] 				= crouch_move
+	self.WeaponAnimTranslations[ACT_RUN_AIM] 						= run
+	self.WeaponAnimTranslations[ACT_RUN_CROUCH] 					= crouch_move
+	self.WeaponAnimTranslations[ACT_RUN_CROUCH_AIM] 				= crouch_move
+	self.WeaponAnimTranslations[ACT_RANGE_ATTACK1] 					= idle
+	self.WeaponAnimTranslations[ACT_GESTURE_RANGE_ATTACK1] 			= fire
+	self.WeaponAnimTranslations[ACT_RANGE_ATTACK1_LOW] 				= crouch
+	self.WeaponAnimTranslations[ACT_RELOAD]							= "vjges_" .. VJ_GetSequenceName(self,reload)
+	self.WeaponAnimTranslations[ACT_COVER_LOW] 						= crouch
+	self.WeaponAnimTranslations[ACT_RELOAD_LOW] 					= "vjges_" .. VJ_GetSequenceName(self,reload)
+	self.WeaponAnimTranslations[ACT_JUMP] 							= jump
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:CustomOnSetupWeaponHoldTypeAnims(htype)
+	self.CurrentHoldType = htype
+	local idle = ACT_HL2MP_IDLE
+	local walk = ACT_HL2MP_WALK
+	local crouch_move = ACT_HL2MP_WALK_CROUCH
+	local run = ACT_HL2MP_RUN
+	local fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_FIST
+	local crouch = ACT_HL2MP_IDLE_CROUCH
+	local reload = ACT_HL2MP_GESTURE_RELOAD_PISTOL
+	if htype == "ar2" && self:GetActiveWeapon().CS_HType != "mach" then
+		idle = ACT_HL2MP_IDLE_AR2
+		walk = ACT_HL2MP_WALK_AR2
+		crouch_move = ACT_HL2MP_WALK_CROUCH_AR2
+		run = ACT_HL2MP_RUN_AR2
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+		crouch = ACT_HL2MP_IDLE_CROUCH_AR2
+		reload = ACT_HL2MP_GESTURE_RELOAD_AR2
+		jump = ACT_HL2MP_JUMP_AR2
+	elseif htype == "smg" && self:GetActiveWeapon().CS_HType != "mac" then
+		idle = ACT_HL2MP_IDLE_SMG1
+		walk = ACT_HL2MP_WALK_SMG1
+		crouch_move = ACT_HL2MP_WALK_CROUCH_SMG1
+		run = ACT_HL2MP_RUN_SMG1
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1
+		crouch = ACT_HL2MP_IDLE_CROUCH_SMG1
+		reload = ACT_HL2MP_GESTURE_RELOAD_SMG1
+		jump = ACT_HL2MP_JUMP_SMG1
+	elseif htype == "shotgun" then
+		idle = ACT_HL2MP_IDLE_SHOTGUN
+		walk = ACT_HL2MP_WALK_SHOTGUN
+		crouch_move = ACT_HL2MP_WALK_CROUCH_SHOTGUN
+		run = ACT_HL2MP_RUN_SHOTGUN
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN
+		crouch = ACT_HL2MP_IDLE_CROUCH_SHOTGUN
+		reload = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN
+		jump = ACT_HL2MP_JUMP_SHOTGUN
+	elseif htype == "rpg" then
+		idle = ACT_HL2MP_IDLE_RPG
+		walk = ACT_HL2MP_WALK_RPG
+		crouch_move = ACT_HL2MP_WALK_CROUCH_RPG
+		run = ACT_HL2MP_RUN_RPG
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_RPG
+		crouch = ACT_HL2MP_IDLE_CROUCH_RPG
+		reload = ACT_HL2MP_GESTURE_RELOAD_RPG
+		jump = ACT_HL2MP_JUMP_RPG
+	elseif htype == "pistol" then
+		idle = ACT_HL2MP_IDLE_REVOLVER
+		walk = ACT_HL2MP_WALK_REVOLVER
+		crouch_move = ACT_HL2MP_WALK_CROUCH_PISTOL
+		run = ACT_HL2MP_RUN_REVOLVER
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL
+		crouch = ACT_HL2MP_IDLE_CROUCH_PISTOL
+		reload = ACT_HL2MP_GESTURE_RELOAD_PISTOL
+		jump = ACT_HL2MP_JUMP_REVOLVER
+	elseif htype == "dual" then
+		idle = "idle_dual"
+		walk = "walk_dual"
+		crouch_move = "cwalk_dual"
+		run = "run_dual"
+		fire = "range_dual_r"
+		crouch = "cidle_dual"
+		reload = "reload_dual"
+		jump = "jump_dual"
+	elseif htype == "revolver" then
+		idle = ACT_HL2MP_IDLE_REVOLVER
+		walk = ACT_HL2MP_WALK_REVOLVER
+		crouch_move = ACT_HL2MP_WALK_CROUCH_REVOLVER
+		run = ACT_HL2MP_RUN_REVOLVER
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_REVOLVER
+		crouch = ACT_HL2MP_IDLE_CROUCH_REVOLVER
+		reload = ACT_HL2MP_GESTURE_RELOAD_REVOLVER
+		jump = ACT_HL2MP_JUMP_REVOLVER
+	elseif htype == "crossbow" then
+		idle = ACT_HL2MP_IDLE_CROSSBOW
+		walk = ACT_HL2MP_WALK_CROSSBOW
+		crouch_move = ACT_HL2MP_WALK_CROUCH_CROSSBOW
+		run = ACT_HL2MP_RUN_CROSSBOW
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_CROSSBOW
+		crouch = ACT_HL2MP_IDLE_CROUCH_CROSSBOW
+		reload = ACT_HL2MP_GESTURE_RELOAD_CROSSBOW
+		jump = ACT_HL2MP_JUMP_CROSSBOW
+	elseif htype == "knife" then
+		idle = ACT_HL2MP_IDLE_KNIFE
+		walk = ACT_HL2MP_WALK_KNIFE
+		crouch_move = ACT_HL2MP_WALK_CROUCH_KNIFE
+		run = ACT_HL2MP_RUN_KNIFE
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE
+		crouch = ACT_HL2MP_IDLE_CROUCH_KNIFE
+		reload = ACT_HL2MP_GESTURE_RELOAD_KNIFE
+		jump = ACT_HL2MP_JUMP_KNIFE
+	elseif htype == "grenade" then
+		idle = ACT_HL2MP_IDLE_GRENADE
+		walk = ACT_HL2MP_WALK_GRENADE
+		crouch_move = ACT_HL2MP_WALK_CROUCH_GRENADE
+		run = ACT_HL2MP_RUN_GRENADE
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE
+		crouch = ACT_HL2MP_IDLE_CROUCH_GRENADE
+		reload = ACT_HL2MP_GESTURE_RELOAD_GRENADE
+		jump = ACT_HL2MP_JUMP_GRENADE
+	elseif htype == "melee" then
+		idle = ACT_HL2MP_IDLE_MELEE
+		walk = ACT_HL2MP_WALK_MELEE
+		crouch_move = ACT_HL2MP_WALK_CROUCH_MELEE
+		run = ACT_HL2MP_RUN_MELEE
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE
+		crouch = ACT_HL2MP_IDLE_CROUCH_MELEE
+		reload = ACT_HL2MP_GESTURE_RELOAD_MELEE
+		jump = ACT_HL2MP_JUMP_MELEE
+	elseif htype == "melee_angry" then
+		idle = "idle_melee_angry"
+		walk = ACT_HL2MP_WALK_MELEE
+		crouch_move = ACT_HL2MP_WALK_CROUCH_MELEE
+		run = ACT_HL2MP_RUN_MELEE
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE
+		crouch = ACT_HL2MP_IDLE_CROUCH_MELEE
+		reload = ACT_HL2MP_GESTURE_RELOAD_MELEE
+		jump = ACT_HL2MP_JUMP_MELEE
+	elseif htype == "melee2" then
+		idle = ACT_HL2MP_IDLE_MELEE2
+		walk = ACT_HL2MP_WALK_MELEE2
+		crouch_move = ACT_HL2MP_WALK_CROUCH_MELEE2
+		run = ACT_HL2MP_RUN_MELEE2
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE2
+		crouch = ACT_HL2MP_IDLE_CROUCH_MELEE2
+		reload = ACT_HL2MP_GESTURE_RELOAD_MELEE2
+		jump = ACT_HL2MP_JUMP_MELEE2
+	elseif htype == "physgun" then
+		idle = ACT_HL2MP_IDLE_PHYSGUN
+		walk = ACT_HL2MP_WALK_PHYSGUN
+		crouch_move = ACT_HL2MP_WALK_CROUCH_PHYSGUN
+		run = ACT_HL2MP_RUN_PHYSGUN
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN
+		crouch = ACT_HL2MP_IDLE_CROUCH_PHYSGUN
+		reload = ACT_HL2MP_GESTURE_RELOAD_PHYSGUN
+		jump = ACT_HL2MP_JUMP_PHYSGUN
+	elseif htype == "ar2" && self:GetActiveWeapon().CS_HType == "mach" then
+		idle = ACT_HL2MP_IDLE_SHOTGUN
+		walk = ACT_HL2MP_WALK_SHOTGUN
+		crouch_move = ACT_HL2MP_WALK_CROUCH_SHOTGUN
+		run = ACT_HL2MP_RUN_SHOTGUN
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+		crouch = ACT_HL2MP_IDLE_CROUCH_SHOTGUN
+		reload = ACT_HL2MP_GESTURE_RELOAD_SMG1
+		jump = ACT_HL2MP_JUMP_SHOTGUN
+	elseif htype == "smg" && self:GetActiveWeapon().CS_HType == "mac" then
+		idle = ACT_HL2MP_IDLE_REVOLVER
+		walk = ACT_HL2MP_WALK_REVOLVER
+		crouch_move = ACT_HL2MP_WALK_CROUCH_REVOLVER
+		run = ACT_HL2MP_RUN_REVOLVER
+		fire = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL
+		crouch = ACT_HL2MP_IDLE_CROUCH_REVOLVER
+		reload = ACT_HL2MP_GESTURE_RELOAD_REVOLVER
+		jump = ACT_HL2MP_JUMP_REVOLVER
+	end
+	self:SetAnimData(idle,crouch,crouch_move,walk,run,fire,reload,jump)
+	return true
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:OnFireBullet(ent,data)
+	if self.CurrentHoldType == "dual" then
+		local seq = nil
+		if self.CurrentFireType == 1 then
+			self.CurrentFireType = 2
+			seq = "range_dual_l"
+		else
+			self.CurrentFireType = 1
+			seq = "range_dual_r"
 		end
-	end)
+		self.WeaponAnimTranslations[ACT_GESTURE_RANGE_ATTACK1] = VJ_SequenceToActivity(self,seq)
+		self:GetActiveWeapon().PrimaryEffects_MuzzleAttachment = self.CurrentFireType
+	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:DecideName()
@@ -196,24 +387,6 @@ function ENT:DecideName()
 	end
 	self:SetName(name)
 	self.PrintName = name
-end
----------------------------------------------------------------------------------------------------------------------------------------------
-function ENT:SetupHoldtypes(wep,ht)
-	if ht == "ar2" then
-		self:BotAnim(ACT_HL2MP_IDLE_AR2,ACT_HL2MP_WALK_AR2,ACT_HL2MP_RUN_AR2,"range_ar2","reload_ar2")
-	elseif ht == "smg" then
-		self:BotAnim(ACT_HL2MP_IDLE_SMG1,ACT_HL2MP_WALK_SMG1,ACT_HL2MP_RUN_SMG1,"range_smg1","reload_smg1")
-	elseif ht == "shotgun" then
-		self:BotAnim(ACT_HL2MP_IDLE_SHOTGUN,ACT_HL2MP_WALK_SHOTGUN,ACT_HL2MP_RUN_SHOTGUN,"range_shotgun","reload_shotgun")
-	elseif ht == "rpg" then
-		self:BotAnim(ACT_HL2MP_IDLE_RPG,ACT_HL2MP_WALK_RPG,ACT_HL2MP_RUN_RPG,"range_rpg","reload_ar2")
-	elseif ht == "pistol" then
-		self:BotAnim(ACT_HL2MP_IDLE_PISTOL,ACT_HL2MP_WALK_PISTOL,ACT_HL2MP_RUN_PISTOL,"range_pistol","reload_pistol")
-	elseif ht == "revolver" then
-		self:BotAnim("idle_revolver","walk_revolver","run_revolver","range_revolver","reload_pistol")
-	elseif ht == "crossbow" then
-		self:BotAnim(ACT_HL2MP_IDLE_CROSSBOW,ACT_HL2MP_WALK_CROSSBOW,ACT_HL2MP_RUN_CROSSBOW,"range_ar2","reload_ar2")
-	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:PlayerName()
@@ -245,33 +418,53 @@ function ENT:BotChat(text,ply)
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function ENT:BotAnim(idle,walk,run,fire,reload)
-	if type(idle) == "string" then
-		idle = VJ_SequenceToActivity(self,idle)
+function ENT:Between(a,b)
+	local waypoint = self:GetCurWaypointPos()
+	local ang = (waypoint -self:GetPos()):Angle()
+	local dif = math.AngleDifference(self:GetAngles().y,ang.y)
+	return dif < a && dif > b
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function ENT:DecideXY()
+	local x = 0
+	local y = 0
+	if self:Between(30,-30) then
+		x = 1
+		y = 0
+	elseif self:Between(70,30) then
+		x = 1
+		y = 1
+	elseif self:Between(120,70) then
+		x = 0
+		y = 1
+	elseif self:Between(150,120) then
+		x = -1
+		y = 1
+	elseif !self:Between(150,-150) then
+		x = -1
+		y = 0
+	elseif self:Between(-110,-150) then
+		x = -1
+		y = -1
+	elseif self:Between(-70,-110) then
+		x = 0
+		y = -1
+	elseif self:Between(-30,-70) then
+		x = 1
+		y = -1
 	end
-	if type(walk) == "string" then
-		walk = VJ_SequenceToActivity(self,walk)
-	end
-	if type(run) == "string" then
-		run = VJ_SequenceToActivity(self,run)
-	end
-	self.AnimTbl_IdleStand = {idle}
-	self.AnimTbl_Walk = {walk}
-	self.AnimTbl_Run = {run}
-	self.AnimTbl_ShootWhileMovingRun = self.AnimTbl_Run
-	self.AnimTbl_ShootWhileMovingWalk = self.AnimTbl_Walk
-	self.AnimTbl_WeaponAttack = self.AnimTbl_IdleStand
-	self.AnimTbl_WeaponAttackFiringGesture = {fire}
-	self.AnimTbl_WeaponReload = {"vjges_" .. reload}
-	self.AnimTbl_AlertFriendsOnDeath = self.AnimTbl_IdleStand
-	self.AnimTbl_CustomWaitForEnemyToComeOut = self.AnimTbl_IdleStand
-	self.AnimTbl_LostWeaponSight = self.AnimTbl_IdleStand
-	self.CustomWalkActivites = self.AnimTbl_Walk
-	self.CustomRunActivites = self.AnimTbl_Run
+	
+	self:SetPoseParameter("move_x",x)
+	self:SetPoseParameter("move_y",y)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnThink()
-	self:SetPoseParameter("move_x",1)
+	self:DecideXY()
+	if self:IsMoving() then
+		if !self.DoingWeaponAttack && self:GetPos():Distance(self:GetCurWaypointPos()) > 75 then
+			self:FaceCertainPosition(self:GetCurWaypointPos())
+		end
+	end
 	if IsValid(self:GetEnemy()) then
 		if CurTime() > self.NextCombatChatT then
 			self:BotChat(VJ_PICK(self.tbl_ChatCombat))

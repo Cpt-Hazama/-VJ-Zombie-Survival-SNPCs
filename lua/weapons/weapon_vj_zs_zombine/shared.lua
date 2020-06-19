@@ -227,6 +227,7 @@ function SWEP:CustomOnThink()
 		end
 	end
 	if self.RageState then
+		self.Owner:VJ_ZS_Howled(0.1)
 		self.Owner:SetRunSpeed(self.ZSpeedRage)
 		self.Owner:SetWalkSpeed(self.ZSpeedRage)
 		self.ZStepTime = 350
@@ -259,10 +260,11 @@ end
 function SWEP:PainSound()
 	local snd = VJ_PICK(self.PainSounds)
 	self:EmitSound(snd,80,100)
-	if self.Owner:Health() <= 60 && !self.RageState then
+	if self.Owner:Health() <= 100 && !self.RageState then
 		self.RageState = true
 		snd = "npc/zombine/zombine_alert6.wav"
 		self.Owner:EmitSound(snd,95,100)
+		self.Owner:VJ_ZS_Howled(3)
 	end
 	self.NextMoanT = CurTime() +SoundDuration(snd) +math.Rand(0.5,1)
 end

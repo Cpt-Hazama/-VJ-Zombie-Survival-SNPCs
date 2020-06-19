@@ -204,8 +204,33 @@ function ENT:Initialize()
 	if self.EnforceWeapons then
 		self:EnforceStarterWeapons()
 	end
+	self.NextNumberCheckT = CurTime() +1
 	self:SetNWInt("VJ_ZSWaveMax",self.TotalWaves)
+	-- self:SetNWInt("VJ_ZSTotalHumans",0)
+	self:SetNWInt("VJ_ZSTotalZombies",0)
 end
+---------------------------------------------------------------------------------------------------------------------------------------------
+-- function ENT:UpdateNumbers()
+	-- if CurTime() > self.NextNumberCheckT then
+		-- local tbl = {}
+		-- local tblZ = {}
+		-- if GetConVarNumber("ai_ignoreplayers") == 0 then
+			-- for _,v in pairs(player.GetAll()) do
+				-- if v.VJ_ZS_IsZombie then
+					-- table.insert(tblZ,v)
+				-- else
+					-- table.insert(tbl,v)
+				-- end
+			-- end
+		-- end
+		-- for _,v in pairs(ents.FindByClass("npc_vj_hzs_bot")) do
+			-- table.insert(tbl,v)
+		-- end
+		-- self:SetNWInt("VJ_ZSTotalHumans",#tbl)
+		-- self:SetNWInt("VJ_ZSTotalZombies",#tblZ +#self.Zombies)
+		-- self.NextNumberCheckT = CurTime() +math.Rand(4,8)
+	-- end
+-- end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:ObtainWaveWeapon(ent,wave)
 	if !self.EnforceWeapons then return end
@@ -223,7 +248,6 @@ function ENT:ObtainWaveWeapon_Bot(ent,wave)
 	if wave == 0 then wep = "weapon_vj_9mmpistol" end
 	if IsValid(ent:GetActiveWeapon()) then ent:GetActiveWeapon():Remove() end
 	ent:Give(wep)
-	ent:SetupHoldtypes(ent:GetActiveWeapon(),ent:GetActiveWeapon().HoldType)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:EnforceStarterWeapons()
@@ -599,6 +623,7 @@ function ENT:SetIntermission(nextWave)
 			end
 		end
 	end
+	self.NextWaveT = CurTime() +self.IntermissionTime
 	timer.Simple(self.IntermissionTime,function()
 		if IsValid(self) then
 			self.InIntermission = false
@@ -766,18 +791,20 @@ end
 function ENT:Think()
 	local wave = self.Wave
 	self:SetNWInt("VJ_ZSWave",wave)
-	-- self:SetNWBool("VJ_ZSIntermission",self.InIntermission)
+	self:SetNWBool("VJ_ZSIntermission",self.InIntermission)
 	self:SetNWBool("VJ_ZSBoss",IsValid(self.Boss))
-	if IsValid(self.Boss) then
-		self:SetNWString("VJ_ZSBossIcon",self.Boss:GetClass())
-		self:SetNWInt("VJ_ZSBossHP",math.Round(self.Boss:Health()))
-	end
-	self:SetNWInt("VJ_ZSZombieCount",#self.Zombies) // WaveTime
+	-- if IsValid(self.Boss) then
+		-- self:SetNWString("VJ_ZSBossIcon",self.Boss:GetClass())
+		-- self:SetNWInt("VJ_ZSBossHP",math.Round(self.Boss:Health()))
+	-- end
+	-- self:UpdateNumbers()
+	self:SetNWInt("VJ_ZSTotalZombies",#self.Zombies)
+	-- self:SetNWInt("VJ_ZSZombieCount",#self.Zombies) // WaveTime
 	if self.StartedOnslaught then
 		if self.NextWaveT > 0 then
 			self:SetNWInt("VJ_ZSCountdown",math.Round(self.NextWaveT -CurTime()))
-		else
-			self:SetNWInt("VJ_ZSCountdown",0)
+		-- else
+			-- self:SetNWInt("VJ_ZSCountdown",0)
 		end
 	else
 		self:SetNWInt("VJ_ZSCountdown",math.Round(self.StarterTimer -CurTime()))

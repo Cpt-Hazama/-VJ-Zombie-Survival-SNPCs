@@ -59,8 +59,8 @@ ENT.SoundTbl_Death = {"npc/headcrab_poison/ph_rattle1.wav","npc/headcrab_poison/
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:CustomOnInitialize()
 	self:SetCollisionBounds(Vector(14,14,15), Vector(-14,-14,0))
-	self.AnimTbl_Walk = {self:VJ_LookupAnimationString("Scurry")}
-	self.AnimTbl_Run = {self:VJ_LookupAnimationString("Scurry")}
+	self.AnimTbl_Walk = {VJ_SequenceToActivity(self,"Scurry")}
+	self.AnimTbl_Run = {VJ_SequenceToActivity(self,"Scurry")}
 	self:CapabilitiesAdd(bit.bor(CAP_MOVE_JUMP))
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))

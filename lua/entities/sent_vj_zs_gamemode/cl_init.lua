@@ -1,8 +1,23 @@
 include('shared.lua')
 
 surface.CreateFont("VJ_ZS",{
-	font = "anthem",
+	font = "akbar", //anthem
 	size = 17,
+})
+
+surface.CreateFont("VJ_ZS_Medium",{
+	font = "akbar", //anthem
+	size = 20,
+})
+
+surface.CreateFont("VJ_ZS_MediumB",{
+	font = "akbar", //anthem
+	size = 25,
+})
+
+surface.CreateFont("VJ_ZS_Large",{
+	font = "akbar", //anthem
+	size = 35,
 })
 
 hook.Add("HUDPaint","VJ_ZombieSurvival_HUD",function()
@@ -15,79 +30,122 @@ hook.Add("HUDPaint","VJ_ZombieSurvival_HUD",function()
 	end
 	CANDRAW = (IsValid(sp) && hasHUD)
 	if CANDRAW == false then return end
-	local zbText = sp:GetNWBool("VJ_ZSBoss")
 	
+	local function Numbers(sp)
+		local tblH = {}
+		local tblZ = {}
+		if GetConVarNumber("ai_ignoreplayers") == 0 then
+			for _,v in pairs(player.GetAll()) do
+				if v:GetNWBool("VJ_ZS_IsZombie") then
+					table.insert(tblZ,v)
+				else
+					table.insert(tblH,v)
+				end
+			end
+		end
+		for _,v in pairs(ents.FindByClass("npc_vj_hzs_bot")) do
+			table.insert(tblH,v)
+		end
+		return {h=#tblH,z=#tblZ +sp:GetNWInt("VJ_ZSTotalZombies")}
+	end
+
+	local zbText = sp:GetNWBool("VJ_ZSBoss")
 	local k = ply:GetNWInt("VJ_ZSKills")
 	local d = ply:GetNWInt("VJ_ZSDeaths")
+	local humans = Numbers(sp).h
+	local zombies = Numbers(sp).z
+	local wave = sp:GetNWInt("VJ_ZSWave")
+	local time = sp:GetNWInt("VJ_ZSCountdown")
+	local intermission = sp:GetNWBool("VJ_ZSIntermission")
 
+	local zombo = surface.GetTextureID("HUD/zombohead")
+	local human = surface.GetTextureID("HUD/humanhead")
+
+		//-- Main Box --\\
 	local smooth = 8
 	local bposX = 10
 	local bposY = 10
-	local bX = 205
-	local bY = 80
+	local bX = 240
+	local bY = 120
 	draw.RoundedBox(smooth,bposX,bposY,bX,bY,Color(0,0,0,200))
 
-	if !zbText then
-		local zombo = surface.GetTextureID("HUD/killicons/npc_vj_zs_zombie")
-		local zposX = 45
-		local zposY = 50
-		local zX = 78
-		local zY = 74
-		surface.SetTexture(zombo)
-		surface.SetDrawColor(255,255,255,255)
-		surface.DrawTexturedRectRotated(zposX,zposY,zX,zY,0)
-	end
-		
-	local wText = sp:GetNWInt("VJ_ZSWave")
-	local wposX = 84
-	local wposY = 13
-	local wFText = "Wave " .. wText
-	draw.SimpleText(wFText,"VJ_ZS",wposX,wposY,Color(0,255,0,255))
+		//-- Zombie Head --\\
+	local zposX = 35
+	local zposY = 40
+	local zX = 50
+	local zY = 50
+	surface.SetTexture(zombo)
+	surface.SetDrawColor(255,255,255,255)
+	surface.DrawTexturedRectRotated(zposX,zposY,zX,zY,0)
 
-	local zText = sp:GetNWInt("VJ_ZSZombieCount")
-	local zposX = 84
-	local zposY = 28
-	local zFText = "Z-Count: " .. zText
-	draw.SimpleText(zFText,"VJ_ZS",zposX,zposY,Color(0,255,0,255))
-	
-	local tText = sp:GetNWInt("VJ_ZSCountdown")
-	local tposX = 84
-	local tposY = 42
-	if tText < 0 then
-		tText = 0
-	end
-	local tFText = "Round End: " .. tText
-	draw.SimpleText(tFText,"VJ_ZS",tposX,tposY,Color(0,255,0,255))
-	
-	local kposX = 84
-	local kposY = 57
-	if tText < 0 then
-		tText = 0
-	end
-	local tFText = "Kills: " .. k .. " | Deaths: " .. d
-	draw.SimpleText(tFText,"VJ_ZS",kposX,kposY,Color(0,255,0,255))
+		//-- Zombie Count --\\
+	local zposX = 58
+	local zposY = 25
+	draw.SimpleText(zombies,"VJ_ZS_Large",zposX,zposY,Color(0,255,0,255))
 
-	if zbText then
-		local zbiText = sp:GetNWBool("VJ_ZSBossIcon")
-		if zbiText then
-			local bosszombo = surface.GetTextureID("HUD/killicons/" .. zbiText)
-			local zbiposX = 45
-			local zbiposY = 50
-			local zbiX = 78
-			local zbiY = 74
-			surface.SetTexture(bosszombo)
-			surface.SetDrawColor(255,255,255,255)
-			surface.DrawTexturedRectRotated(zbiposX,zbiposY,zbiX,zbiY,0)
+		//-- Human Head --\\
+	local zposX = 35
+	local zposY = 100
+	local zX = 50
+	local zY = 50
+	surface.SetTexture(human)
+	surface.SetDrawColor(255,255,255,255)
+	surface.DrawTexturedRectRotated(zposX,zposY,zX,zY,0)
+
+		//-- Human Count --\\
+	local zposX = 58
+	local zposY = 80
+	draw.SimpleText(humans,"VJ_ZS_Large",zposX,zposY,Color(46,40,215,255))
+
+	if intermission then
+		//-- Wave --\\
+		local text = "Intermission"
+		if wave <= 0 then
+			text = "Preperation"
 		end
+		local wposX = 120
+		local wposY = 15
+		draw.SimpleText(text,"VJ_ZS_MediumB",wposX,wposY,Color(0,220,255,255))
 
-		local zbposX = 15
-		local zbposY = 60
-		draw.SimpleText("BOSS!","CloseCaption_Bold",zbposX,zbposY,Color(255,0,0,255))
-		
-		local zbHposX = 84
-		local zbHposY = 72
-		draw.SimpleText(tostring(sp:GetNWInt("VJ_ZSBossHP")) .. " HP","VJ_ZS",zbHposX,zbHposY,Color(255,0,0,255))
+			//-- Timer --\\
+		local tText = time
+		local tposX = 120
+		local tposY = 42
+		if tText < 0 then
+			tText = 0
+		end
+		local tFText = "Break End: " .. string.FormattedTime(tText,"%02i:%02i")
+		draw.SimpleText(tFText,"VJ_ZS_Medium",tposX,tposY,Color(0,220,255,255))
+	else
+		//-- Wave --\\
+		local wText = wave
+		local wposX = 120
+		local wposY = 15
+		local wFText = "Wave " .. wText
+		draw.SimpleText(wFText,"VJ_ZS_MediumB",wposX,wposY,Color(0,220,255,255))
+
+			//-- Timer --\\
+		local tText = time
+		local tposX = 120
+		local tposY = 42
+		if tText < 0 then
+			tText = 0
+		end
+		local tFText = "Round End: " .. string.FormattedTime(tText,"%02i:%02i")
+		draw.SimpleText(tFText,"VJ_ZS_Medium",tposX,tposY,Color(0,220,255,255))
 	end
+
+		//-- Kills --\\
+	local kposX = 120
+	local kposY = 65
+	local tFText = "Kills: " .. k
+	draw.SimpleText(tFText,"VJ_ZS_MediumB",kposX,kposY,Color(200,51,45,255))
+
+		//-- Deaths --\\
+	local kposX = 120
+	local kposY = 92
+	local tFText = "Deaths: " .. d
+	draw.SimpleText(tFText,"VJ_ZS_MediumB",kposX,kposY,Color(200,51,45,255))
 end)
 
 function ENT:Initialize()

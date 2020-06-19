@@ -18,6 +18,7 @@ if VJExists == true then
 	VJ_ZS_MinZoom = 15
 
 	local vCat = "Zombie Survival - Tools"
+	VJ.AddCategoryInfo(vCat,{Icon = "vj_icons/zs_tools.png"})
 	VJ.AddNPC("Gamemode","sent_vj_zs_gamemode",vCat)
 	VJ.AddNPC("Zombie Gas","sent_vj_zs_spawner",vCat)
 	VJ.AddNPC("Ammo Crate","sent_vj_zs_ammocrate",vCat)
@@ -28,6 +29,7 @@ if VJExists == true then
 	VJ.AddNPC("Sniper Turret","npc_vj_hzs_turret_sniper",vCat)
 
 	local vCat = "Zombie Survival"
+	VJ.AddCategoryInfo(vCat,{Icon = "vj_icons/zs.png"})
 	VJ.AddNPC("Zombie","npc_vj_zs_zombie",vCat)
 	VJ.AddNPC("Zombie Torso","npc_vj_zs_zombietorso",vCat)
 	VJ.AddNPC("Fast Zombie","npc_vj_zs_fastzombie",vCat)
@@ -83,7 +85,7 @@ if VJExists == true then
 				net.WriteEntity(ply)
 				net.WriteInt(int,10)
 			net.SendToServer(ply)
-			ScrollSpeed = CurTime() + 0.01
+			ScrollSpeed = CurTime() +0.01
 			return true
 		end)
 	end
@@ -266,21 +268,23 @@ if VJExists == true then
 		end
 	end)
 	
-	hook.Add("PlayerFootstep","VJ_ZS_PlayerStepSounds",function(ent,pos,foot/*0=left,1=right*/,snd,vol,tblCanHear)
-		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZSteps then
-			local tbl = ent:GetActiveWeapon().ZSteps
-			if tbl == false then return true end
-			ent:EmitSound(VJ_PICK(tbl),ent:GetActiveWeapon().ZStepVolume or math.random(50,65),ent:GetActiveWeapon().ZStepPitch or 100)
-			return true
-		end
-	end)
-	
-	hook.Add("PlayerStepSoundTime","VJ_ZS_PlayerStepSoundTime",function(ent,enum,isWalking)
-		if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZStepTime then
-			if ent:GetActiveWeapon().ZStepTime == false then return end
-			return ent:GetActiveWeapon().ZStepTime
-		end
-	end)
+	if SERVER then
+		hook.Add("PlayerFootstep","VJ_ZS_PlayerStepSounds",function(ent,pos,foot/*0=left,1=right*/,snd,vol,tblCanHear)
+			if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZSteps then
+				local tbl = ent:GetActiveWeapon().ZSteps
+				if tbl == false then return true end
+				ent:EmitSound(VJ_PICK(tbl),ent:GetActiveWeapon().ZStepVolume or math.random(50,65),ent:GetActiveWeapon().ZStepPitch or 100)
+				return true
+			end
+		end)
+		
+		hook.Add("PlayerStepSoundTime","VJ_ZS_PlayerStepSoundTime",function(ent,enum,isWalking)
+			if ent:IsPlayer() && IsValid(ent:GetActiveWeapon()) && ent:GetActiveWeapon().ZStepTime then
+				if ent:GetActiveWeapon().ZStepTime == false then return end
+				return ent:GetActiveWeapon().ZStepTime
+			end
+		end)
+	end
 	
 	hook.Add("PlayerSay","VJ_ZS_PlayerStepSoundTime",function(sender,text,teamChat)
 		if text == "gg" then
@@ -381,11 +385,11 @@ if VJExists == true then
 		if iIntensity == nil then
 			return
 		end
-		self:SendLua( "StalkerFuck("..( iIntensity )..")" )
+		if SERVER then self:SendLua( "StalkerFuck("..( iIntensity )..")" ) end
 	end
 	
-	local ViewHullMins = Vector(-8, -8, -8)
-	local ViewHullMaxs = Vector(8, 8, 8)
+	local ViewHullMins = Vector(-8,-8,-8)
+	local ViewHullMaxs = Vector(8,8,8)
 	function PLY:VJ_ZSThirdPersonPos(origin,angles)
 		local allplayers = player.GetAll()
 		local tr = util.TraceHull({
