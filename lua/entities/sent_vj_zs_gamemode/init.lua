@@ -103,7 +103,7 @@ ENT.PlayerWeapons = { -- Replace these with whatever you want, too lazy to make 
 	},
 	[3] = {
 		"weapon_vj_smg1",
-		"weapon_vj_zs_tmp",
+		"weapon_vj_zsh_tmp",
 	},
 	[4] = {
 		"weapon_vj_ak47",
