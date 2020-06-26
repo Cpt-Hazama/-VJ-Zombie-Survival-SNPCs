@@ -55,6 +55,16 @@ SWEP.HasIdleAnimation			= true -- Does it have a idle animation?
 SWEP.AnimTbl_Idle				= {ACT_VM_IDLE}
 SWEP.NextIdle_Deploy			= 0.5 -- How much time until it plays the idle animation after the weapon gets deployed
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+	timer.Simple(0.1,function()
+		if IsValid(self) then
+			local hull = self.ZHull
+			self:GetOwner():SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+			self:GetOwner():SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+		end
+	end)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:Reload()
 	return false
 end

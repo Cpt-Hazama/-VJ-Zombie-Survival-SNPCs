@@ -59,6 +59,16 @@ function SWEP:Reload()
 	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+	timer.Simple(0.1,function()
+		if IsValid(self) then
+			local hull = self.ZHull
+			self:GetOwner():SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+			self:GetOwner():SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+		end
+	end)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
 	local animIdle = ACT_IDLE
 	local animMove = ACT_RUN

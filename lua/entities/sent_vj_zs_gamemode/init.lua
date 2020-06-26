@@ -261,14 +261,14 @@ function ENT:EnforceStarterWeapons()
 				self:ObtainWaveWeapon(v,wave)
 			end
 			if #tbl <= 1 then
-				ent.VJ_CanBePickedUpWithOutUse = true
-				ent.VJ_CanBePickedUpWithOutUse_Class = "weapon_vj_zsh_barricade"
-				ent:Give("weapon_vj_zsh_barricade")
+				v.VJ_CanBePickedUpWithOutUse = true
+				v.VJ_CanBePickedUpWithOutUse_Class = "weapon_vj_zsh_barricade"
+				v:Give("weapon_vj_zsh_barricade")
 			else
 				if math.random(1,2) == 1 then
-					ent.VJ_CanBePickedUpWithOutUse = true
-					ent.VJ_CanBePickedUpWithOutUse_Class = "weapon_vj_zsh_barricade"
-					ent:Give("weapon_vj_zsh_barricade")
+					v.VJ_CanBePickedUpWithOutUse = true
+					v.VJ_CanBePickedUpWithOutUse_Class = "weapon_vj_zsh_barricade"
+					v:Give("weapon_vj_zsh_barricade")
 				end
 			end
 		end
@@ -416,6 +416,16 @@ hook.Add("PlayerSpawn","VJ_ZS_ZombiePlayers",function(ply)
 						v:AddEntityRelationship(ply,D_HT,99)
 						table.insert(v.VJ_AddCertainEntityAsEnemy,ply)
 					end
+				end
+				if ent:GetNWInt("VJ_ZSWave") < 8 && math.random(1,5) == 1 then
+					ent:PlayerNWSound(ply,VJ_PICK({
+						"music/stingers/industrial_suspense1.wav",
+						"music/stingers/industrial_suspense2.wav",
+						"music/stingers/hl1_stinger_song16.mp3",
+						"music/stingers/hl1_stinger_song27.mp3",
+						"music/stingers/hl1_stinger_song7.mp3",
+						"music/stingers/hl1_stinger_song8.mp3",
+					}))
 				end
 			end)
 		end

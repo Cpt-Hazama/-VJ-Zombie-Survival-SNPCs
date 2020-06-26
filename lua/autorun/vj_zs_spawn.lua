@@ -167,15 +167,15 @@ if VJExists == true then
 		
 		if CLIENT then
 			hook.Add("Tick","VJ_ZS_TickHull",function()
-				local plys = player.GetAll()
-				for _,ply in pairs(plys) do
-					if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
-						local wep = ply:GetActiveWeapon()
-						local hull = wep.ZHull
-						ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
-						ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
-					end
-				end
+				-- local plys = player.GetAll()
+				-- for _,ply in pairs(plys) do
+					-- if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
+						-- local wep = ply:GetActiveWeapon()
+						-- local hull = wep.ZHull
+						-- ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+						-- ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
+					-- end
+				-- end
 			end)
 
 			local matGlow = Material("Sprites/light_glow02_add_noz")
@@ -238,12 +238,12 @@ if VJExists == true then
 			local plys = player.GetAll()
 			for _,ply in pairs(plys) do
 				ply:VJ_ZS_SetGhosting(ply:KeyDown(IN_WALK))
-				if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
-					local wep = ply:GetActiveWeapon()
-					local hull = wep.ZHull
-					ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
-					ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
-				end
+				-- if IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().ZHull then
+					-- local wep = ply:GetActiveWeapon()
+					-- local hull = wep.ZHull
+					-- ply:SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+					-- ply:SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.d))
+				-- end
 			end
 		end)
 		
