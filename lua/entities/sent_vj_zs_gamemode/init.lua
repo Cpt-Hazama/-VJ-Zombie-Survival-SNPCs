@@ -133,11 +133,25 @@ function ENT:SetupZombies() -- Called when wave starts
 	local counter = self.Wave
 	if free then counter = self.TotalWaves end
 	for i = 1,counter do
-		for _,z in pairs(self.ZombieThresholds[i]) do
-			table.insert(self.ZombieClasses,z)
+		local didFestive = false
+		local didFestivePLY = false
+		for i,z in pairs(self.ZombieThresholds[i]) do
+			if os.date("%m") == "10" then
+				if z == "npc_vj_zs_zombie" then
+					table.insert(self.ZombieClasses,"npc_vj_zs_zombie_hw")
+					didFestive = true
+				end
+			end
+			if !didFestive then table.insert(self.ZombieClasses,z) end
 		end
 		for _,z in pairs(self.PlayerZombieThresholds[i]) do
-			table.insert(self.PlayerClasses,z)
+			if os.date("%m") == "10" then
+				if z == "weapon_vj_zs_zombie" then
+					table.insert(self.PlayerClasses,"weapon_vj_zs_zombie_hw")
+					didFestivePLY = true
+				end
+			end
+			if !didFestivePLY then table.insert(self.PlayerClasses,z) end
 		end
 	end
 	if self.BossRound then
@@ -464,6 +478,9 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:GetStartSong()
 	local tbl = {"common/null.wav"}
+	if os.date("%m") == "10" then
+		return "cpt_zs/events/hw/gamestart_halloween.mp3"
+	end
 	if os.date("%m") == "12" then
 		return "cpt_zs/mrgreen/gamestart_xmas.mp3"
 	end

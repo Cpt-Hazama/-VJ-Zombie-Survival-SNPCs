@@ -1,0 +1,17 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/cpthazama/zombiesurvival/events/hw/skeleton_bloody"
+	"$bumpmap" "models/cpthazama/zombiesurvival/events/hw/skeleton_bloody_n"
+	"$model" "1"
+	"$phong" "1"
+	"$phongboost" "5"								
+	"$phongfresnelranges"	"[0.1 .5  1]"
+	"$phongexponent" 30
+	$emissiveBlendEnabled 1
+    $emissiveBlendTexture    "dev/null"
+    $emissiveBlendBaseTexture    "models/cpthazama/zombiesurvival/events/hw/skeleton_bloody_g"
+    $emissiveBlendFlowTexture    "dev/null"
+    $emissiveBlendTint "[2 0 1]"
+    $emissiveBlendStrength 1
+    $emissiveBlendScrollVector "[0 0]"
+}

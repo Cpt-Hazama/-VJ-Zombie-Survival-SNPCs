@@ -53,6 +53,12 @@ function ENT:CustomOnInitialize()
 	self:CapabilitiesAdd(bit.bor(CAP_USE))
 	self:CapabilitiesAdd(bit.bor(CAP_OPEN_DOORS))
 	self:VJ_ZSSkin("models/zombie_classic/zombie_classic_sheet")
+
+	timer.Simple(0,function()
+		if IsValid(self) then
+			if self.ZSInit then self:ZSInit() end
+		end
+	end)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function ENT:SpawnBloodParticles(dmginfo,hitgroup)

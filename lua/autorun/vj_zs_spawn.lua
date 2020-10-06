@@ -28,6 +28,10 @@ if VJExists == true then
 	VJ.AddNPC("Shotgun Turret","npc_vj_hzs_turret_shotguns",vCat)
 	VJ.AddNPC("Sniper Turret","npc_vj_hzs_turret_sniper",vCat)
 
+	local vCat = "Zombie Survival - Events"
+	VJ.AddCategoryInfo(vCat,{Icon = "vj_icons/zs_event.png"})
+	VJ.AddNPC("Zombie (Halloween)","npc_vj_zs_zombie_hw",vCat)
+
 	local vCat = "Zombie Survival"
 	VJ.AddCategoryInfo(vCat,{Icon = "vj_icons/zs.png"})
 	VJ.AddNPC("Zombie","npc_vj_zs_zombie",vCat)
