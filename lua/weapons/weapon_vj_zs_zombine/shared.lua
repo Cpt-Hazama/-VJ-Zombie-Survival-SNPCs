@@ -70,49 +70,53 @@ function SWEP:Reload()
 	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
-	local animIdle = ACT_IDLE
-	local animMove = ACT_WALK
-	local animAttack = ACT_MELEE_ATTACK1
-	
-	if self.RageState then
-		-- animMove = ACT_RUN_STIMULATED
-	end
+function SWEP:VJ_TranslateActivities(oidle,owalk,orun,oattack)
+	local idle = oidle or ACT_IDLE
+	local walk = owalk or ACT_WALK
+	local run = orun or ACT_RUN
+	local attack = oattack or ACT_MELEE_ATTACK1
+	self.ActivityTranslate = {}
+	self.ActivityTranslate[ACT_MP_STAND_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_WALK]							= walk
+	self.ActivityTranslate[ACT_MP_RUN]							= run
+	self.ActivityTranslate[ACT_MP_CROUCH_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_CROUCHWALK]					= walk
+	self.ActivityTranslate[ACT_MP_ATTACK_STAND_PRIMARYFIRE]		= attack
+	self.ActivityTranslate[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE]	= attack
+	self.ActivityTranslate[ACT_MP_JUMP]							= run
+	self.ActivityTranslate[ACT_RANGE_ATTACK1]					= ACT_MELEE_ATTACK1
+	self.ActivityTranslate[ACT_RELOAD]							= ACT_SPECIAL_ATTACK1
 
-	local ply = self.Owner
-	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
-	local data = {}
-	local act = animIdle
-	local ppx = 0
-	local ppy = 0
-	local noPresses = false
-	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
-		act = animIdle
-	else
-		if lmb then
-			act = animAttack
-		elseif keys.w or keys.a or keys.s or keys.d then
-			act = animMove
+	self.ActivityTranslate_Grenade = {}
+	self.ActivityTranslate_Grenade[ACT_MP_STAND_IDLE]					= ACT_IDLE_ANGRY
+	self.ActivityTranslate_Grenade[ACT_MP_WALK]							= ACT_WALK_STIMULATED
+	self.ActivityTranslate_Grenade[ACT_MP_RUN]							= ACT_RUN_STIMULATED
+	self.ActivityTranslate_Grenade[ACT_MP_CROUCH_IDLE]					= ACT_IDLE_ANGRY
+	self.ActivityTranslate_Grenade[ACT_MP_CROUCHWALK]					= ACT_WALK_STIMULATED
+	self.ActivityTranslate_Grenade[ACT_MP_ATTACK_STAND_PRIMARYFIRE]		= attack
+	self.ActivityTranslate_Grenade[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE]	= attack
+	self.ActivityTranslate_Grenade[ACT_MP_JUMP]							= ACT_RUN_STIMULATED
+	self.ActivityTranslate_Grenade[ACT_RANGE_ATTACK1]					= ACT_SPECIAL_ATTACK1
+	self.ActivityTranslate_Grenade[ACT_RELOAD]							= ACT_SPECIAL_ATTACK1
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:TranslateActivity(act)
+	if self.ActivityTranslate[act] != nil then
+		if self:GetNW2Bool("Pulling") && (act == ACT_MP_ATTACK_STAND_PRIMARYFIRE or act == ACT_MP_ATTACK_CROUCH_PRIMARYFIRE or act == ACT_RANGE_ATTACK1) then
+			return ACT_SPECIAL_ATTACK1
 		end
+		if IsValid(self:GetNW2Entity("Grenade")) then
+			return self.ActivityTranslate_Grenade[act]
+		end
+		return self.ActivityTranslate[act]
 	end
-
-	if keys.w then
-		ppy = 1
-	elseif keys.a then
-		ppx = -1
-	elseif keys.s then
-		ppy = -1
-	elseif keys.d then
-		ppx = 1
-	else
-		ppx = 0
-		ppy = 0
-	end
-
-	data.sequence = act
-	data.movex = ppx
-	data.movey = ppy
-	return data
+	return -1
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+	self:SetNW2Entity("Grenade",NULL)
+	self:SetNW2Bool("Pulling",false)
+	timer.Simple(0,function() self:VJ_TranslateActivities() end)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:AttackAnim(tbl)
@@ -129,37 +133,43 @@ function SWEP:AttackAnim(tbl)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:SecondaryAttack()
-	if CLIENT then return end
 	if CurTime() > self.NextGrenPull && !self.HasPulledGrenade /*&& self.Owner:Health() <= 60*/ then
 		self.HasPulledGrenade = true
+		self:SetNW2Bool("Pulling",true)
 		self:SetNextPrimaryFire(CurTime() +30)
+		self.Owner:SetAnimation(PLAYER_ATTACK1)
 		self.NextIdle_PrimaryAttack = CurTime() +30
 		self:EmitSound("npc/zombine/zombine_readygrenade" .. math.random(1,2) .. ".wav",75,100)
 		self:AttackAnim(self.AnimTbl_Grenade)
 		timer.Simple(0.6,function()
 			if IsValid(self) then
-				local grenent = ents.Create("npc_grenade_frag")
-				local att = self.Owner:GetAttachment(self.Owner:LookupAttachment("grenade_attachment"))
-				local pos = nil
-				local ang = nil
-				if att == nil then
-					pos = self.Owner:GetPos()
-					ang = self.Owner:GetAngles()
-				else
-					pos = att.Pos
-					ang = att.Ang
+				self:SetNW2Bool("Pulling",false)
+				self:VJ_TranslateActivities(ACT_IDLE_ANGRY,ACT_RUN_STIMULATED,ACT_RUN_STIMULATED,ACT_SPECIAL_ATTACK1)
+				if SERVER then
+					local grenent = ents.Create("npc_grenade_frag")
+					local att = self.Owner:GetAttachment(self.Owner:LookupAttachment("grenade_attachment"))
+					local pos = nil
+					local ang = nil
+					if att == nil then
+						pos = self.Owner:GetPos()
+						ang = self.Owner:GetAngles()
+					else
+						pos = att.Pos
+						ang = att.Ang
+					end
+					grenent:SetModel("models/Items/grenadeAmmo.mdl")
+					grenent:SetPos(pos)
+					grenent:SetAngles(ang)
+					grenent:SetOwner(self.Owner)
+					grenent:SetParent(self.Owner)
+					grenent:Fire("SetParentAttachment","grenade_attachment")
+					grenent:Spawn()
+					grenent:Activate()
+					grenent:Input("SetTimer",self.Owner,self.Owner,3.5)
+					self.Grenade = grenent
+					self:SetNW2Entity("Grenade",grenent)
+					self.GrenadeTimer = CurTime() +3.5
 				end
-				grenent:SetModel("models/Items/grenadeAmmo.mdl")
-				grenent:SetPos(pos)
-				grenent:SetAngles(ang)
-				grenent:SetOwner(self.Owner)
-				grenent:SetParent(self.Owner)
-				grenent:Fire("SetParentAttachment","grenade_attachment")
-				grenent:Spawn()
-				grenent:Activate()
-				grenent:Input("SetTimer",self.Owner,self.Owner,3.5)
-				self.Grenade = grenent
-				self.GrenadeTimer = CurTime() +3.5
 			end
 		end)
 		self.NextGrenPull = CurTime() +1
@@ -232,8 +242,14 @@ function SWEP:CustomOnThink()
 		self.Owner:SetWalkSpeed(self.ZSpeedRage)
 		self.ZStepTime = 350
 	else
-		self.Owner:SetRunSpeed(self.ZSpeed)
-		self.Owner:SetWalkSpeed(self.ZSpeed)
+		if self.HasPulledGrenade then
+			self.Owner:SetRunSpeed(200)
+			self.Owner:SetWalkSpeed(200)
+			self.ZStepTime = 350
+		else
+			self.Owner:SetRunSpeed(self.ZSpeed)
+			self.Owner:SetWalkSpeed(self.ZSpeed)
+		end
 	end
 	if SERVER then self:GetOwner():SetModel(self.ZombieModel); self.Owner.VJ_NPC_Class = {"CLASS_ZOMBIE"} end
 	if IsValid(self.Owner) && self.Owner:GetActiveWeapon() != self then
@@ -310,12 +326,30 @@ function SWEP:ZRemove()
 			end
 		end
 	end
+	if IsValid(self.Grenade) then
+		self.Grenade:Fire("SetParentAttachment",nil)
+		self.Grenade:SetParent(NULL)
+	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:CustomOnRemove()
 	self.Owner:AllowFlashlight(true)
+	if IsValid(self.Grenade) then
+		self.Grenade:Fire("SetParentAttachment",nil)
+		self.Grenade:SetParent(NULL)
+	end
 	if SERVER then
-		-- self:ZRemove()
+		if !self.HasPulledGrenade then return end
+		if self.GrenadeTimer -CurTime() <= 0.05 then return end
+		local gren = self.Grenade
+		local grenent = ents.Create("npc_grenade_frag")
+		grenent:SetModel("models/Items/grenadeAmmo.mdl")
+		grenent:SetPos(gren:GetPos())
+		grenent:SetAngles(gren:GetAngles())
+		grenent:SetOwner(IsValid(self.Owner) && self.Owner or grenent)
+		grenent:Spawn()
+		grenent:Activate()
+		grenent:Input("SetTimer",IsValid(self.Owner) && self.Owner or grenent,IsValid(self.Owner) && self.Owner or grenent,self.GrenadeTimer -CurTime())
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------

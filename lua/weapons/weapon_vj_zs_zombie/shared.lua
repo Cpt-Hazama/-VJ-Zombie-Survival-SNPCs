@@ -64,6 +64,34 @@ function SWEP:Reload()
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:VJ_TranslateActivities()
+	local idle = ACT_IDLE
+	local walk = ACT_WALK
+	local run = ACT_RUN
+	local attack = ACT_MELEE_ATTACK1
+	self.ActivityTranslate = {}
+	self.ActivityTranslate[ACT_MP_STAND_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_WALK]							= walk
+	self.ActivityTranslate[ACT_MP_RUN]							= run
+	self.ActivityTranslate[ACT_MP_CROUCH_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_CROUCHWALK]					= walk
+	self.ActivityTranslate[ACT_MP_ATTACK_STAND_PRIMARYFIRE]		= attack
+	self.ActivityTranslate[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE]	= attack
+	self.ActivityTranslate[ACT_MP_JUMP]							= run
+	self.ActivityTranslate[ACT_RANGE_ATTACK1]					= attack
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:TranslateActivity(act)
+	if self.ActivityTranslate[act] != nil then
+		return self.ActivityTranslate[act]
+	end
+	return -1
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+   timer.Simple(0,function() self:VJ_TranslateActivities() end)
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
 	local animIdle = ACT_IDLE
 	local animMove = ACT_WALK

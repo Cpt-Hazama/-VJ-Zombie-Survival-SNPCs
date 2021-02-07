@@ -59,55 +59,42 @@ function SWEP:Reload()
 	return false
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:CustomOnInitialize()
-	timer.Simple(0.1,function()
-		if IsValid(self) then
-			local hull = self.ZHull
-			self:GetOwner():SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
-			self:GetOwner():SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
-		end
-	end)
+function SWEP:VJ_TranslateActivities()
+	local idle = ACT_IDLE
+	local walk = self.Owner:GetSequenceActivity(self.Owner:LookupSequence("Scurry"))
+	local run = self.Owner:GetSequenceActivity(self.Owner:LookupSequence("Scurry"))
+	local attack = ACT_RANGE_ATTACK1
+	self.ActivityTranslate = {}
+	self.ActivityTranslate[ACT_MP_STAND_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_WALK]							= walk
+	self.ActivityTranslate[ACT_MP_RUN]							= run
+	self.ActivityTranslate[ACT_MP_CROUCH_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_CROUCHWALK]					= walk
+	self.ActivityTranslate[ACT_MP_ATTACK_STAND_PRIMARYFIRE]		= attack
+	self.ActivityTranslate[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE]	= attack
+	self.ActivityTranslate[ACT_MP_JUMP]							= walk
+	self.ActivityTranslate[ACT_RANGE_ATTACK1]					= attack
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
-	local animIdle = ACT_IDLE
-	local animMove = self.Owner:GetSequenceActivity(self.Owner:LookupSequence("Scurry"))
-	local animAttack = ACT_MELEE_ATTACK1
-
-	local ply = self.Owner
-	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
-	local data = {}
-	local act = animIdle
-	local ppx = 0
-	local ppy = 0
-	local noPresses = false
-	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
-		act = animIdle
-	else
-		if lmb then
-			act = animAttack
-		elseif keys.w or keys.a or keys.s or keys.d then
-			act = animMove
+function SWEP:TranslateActivity(act)
+	if self.ActivityTranslate[act] != nil then
+		local doingAttack = (act == ACT_MP_ATTACK_STAND_PRIMARYFIRE or act == ACT_MP_ATTACK_CROUCH_PRIMARYFIRE or act == ACT_RANGE_ATTACK1)
+		if self:GetNW2Bool("Range") && doingAttack then
+			return ACT_RANGE_ATTACK2
 		end
+		return self.ActivityTranslate[act]
 	end
-
-	if keys.w then
-		ppy = 1
-	elseif keys.a then
-		ppx = -1
-	elseif keys.s then
-		ppy = -1
-	elseif keys.d then
-		ppx = 1
-	else
-		ppx = 0
-		ppy = 0
-	end
-
-	data.sequence = act
-	data.movex = ppx
-	data.movey = ppy
-	return data
+	return -1
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+	timer.Simple(0,function()
+		self:VJ_TranslateActivities()
+		self:SetNW2Bool("Range",false)
+		local hull = self.ZHull
+		self:GetOwner():SetHull(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+		self:GetOwner():SetHullDuck(Vector(-hull.x,-hull.y,0),Vector(hull.x,hull.y,hull.z))
+	end)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.HasHit = false
@@ -143,14 +130,17 @@ function SWEP:SecondaryAttack()
 		self.Owner:Freeze(true)
 		self:EmitSound("npc/headcrab_poison/ph_scream"..math.random(1,3)..".wav",75,100)
 		self:SendWeaponAnim(ACT_VM_SECONDARYATTACK)
-		timer.Simple(1.8,function()
+		self.Owner:SetAnimation(PLAYER_ATTACK1)
+		self:SetNW2Bool("Range",true)
+		timer.Simple(1.3,function()
 			if IsValid(self) then
 				self:DoIdleAnimation()
 			end
 		end)
-		timer.Simple(1.3,function()
+		timer.Simple(0.6,function()
 			if IsValid(self) then
 				self.Owner:Freeze(false)
+				self:SetNW2Bool("Range",false)
 				local spit = ents.Create("obj_vj_zs_headcrabspit")
 				spit:SetPos(self.Owner:GetShootPos())
 				spit:SetAngles(self.Owner:GetAngles())

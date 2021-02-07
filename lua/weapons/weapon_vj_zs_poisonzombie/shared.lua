@@ -65,56 +65,51 @@ function SWEP:Reload()
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
-	local animIdle = ACT_IDLE
-	local animMove = ACT_WALK
-	local animAttack = ACT_MELEE_ATTACK1
-
-	local ply = self.Owner
-	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
-	local data = {}
-	local act = animIdle
-	local ppx = 0
-	local ppy = 0
-	local noPresses = false
-	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
-		act = animIdle
-	else
-		if lmb then
-			act = animAttack
-		elseif keys.w or keys.a or keys.s or keys.d then
-			act = animMove
+function SWEP:VJ_TranslateActivities()
+	local idle = ACT_IDLE
+	local walk = ACT_WALK
+	local run = ACT_WALK
+	local attack = ACT_MELEE_ATTACK1
+	self.ActivityTranslate = {}
+	self.ActivityTranslate[ACT_MP_STAND_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_WALK]							= walk
+	self.ActivityTranslate[ACT_MP_RUN]							= run
+	self.ActivityTranslate[ACT_MP_CROUCH_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_CROUCHWALK]					= walk
+	self.ActivityTranslate[ACT_MP_ATTACK_STAND_PRIMARYFIRE]		= attack
+	self.ActivityTranslate[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE]	= attack
+	self.ActivityTranslate[ACT_MP_JUMP]							= run
+	self.ActivityTranslate[ACT_RANGE_ATTACK1]					= attack
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:TranslateActivity(act)
+	if self.ActivityTranslate[act] != nil then
+		local doingAttack = (act == ACT_MP_ATTACK_STAND_PRIMARYFIRE or act == ACT_MP_ATTACK_CROUCH_PRIMARYFIRE or act == ACT_RANGE_ATTACK1)
+		if self:GetNW2Bool("Range") && doingAttack then
+			return VJ_SequenceToActivity(self.Owner,"Throw")
 		end
+		return self.ActivityTranslate[act]
 	end
-
-	if keys.w then
-		ppy = 1
-	elseif keys.a then
-		ppx = -1
-	elseif keys.s then
-		ppy = -1
-	elseif keys.d then
-		ppx = 1
-	else
-		ppx = 0
-		ppy = 0
-	end
-
-	data.sequence = act
-	data.movex = ppx
-	data.movey = ppy
-	return data
+	return -1
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+	timer.Simple(0,function() self:VJ_TranslateActivities() end)
+	self:SetNW2Bool("Range",false)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.NextRangeT = CurTime()
 function SWEP:SecondaryAttack()
 	if CurTime() > self.NextRangeT then
 		if (CLIENT) then return end
+		self:SetNW2Bool("Range",true)
 		self:AttackAnim(self.AnimTbl_Poison)
+		self.Owner:SetAnimation(PLAYER_ATTACK1)
 		self:EmitSound("npc/zombie_poison/pz_throw2.wav",75,100)
 		self.Owner:Freeze(true)
 		timer.Simple(0.6,function()
 			if IsValid(self) then
+				self:SetNW2Bool("Range",false)
 				self.Owner:Freeze(false)
 				self.Owner:TakeDamage(50,self.Owner,self.Owner)
 				for i = 1,6 do

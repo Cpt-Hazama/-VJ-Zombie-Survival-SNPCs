@@ -22,6 +22,7 @@ if VJExists == true then
 	VJ.AddNPC("Gamemode","sent_vj_zs_gamemode",vCat)
 	VJ.AddNPC("Zombie Gas","sent_vj_zs_spawner",vCat)
 	VJ.AddNPC("Ammo Crate","sent_vj_zs_ammocrate",vCat)
+	-- VJ.AddNPC("Objective Point","sent_vj_zs_point",vCat)
 
 	VJ.AddNPC_HUMAN("Player Bot","npc_vj_hzs_bot",{"weapon_vj_zsh_tmp","weapon_vj_zsh_deagle","weapon_vj_zsh_glock","weapon_vj_zsh_mp5","weapon_vj_zsh_p228","weapon_vj_zsh_usp","weapon_vj_357","weapon_vj_9mmpistol","weapon_vj_glock17","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_smg1","weapon_vj_k3","weapon_vj_k3","weapon_vj_ar2","weapon_vj_ar2","weapon_vj_ak47","weapon_vj_m16a1","weapon_vj_mp40","weapon_vj_spas12","weapon_vj_blaster"},vCat)
 	VJ.AddNPC("SMG Turret","npc_vj_hzs_turret",vCat)

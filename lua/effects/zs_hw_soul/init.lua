@@ -20,7 +20,7 @@ function EFFECT:Render()
 	render.SetMaterial(Material("effects/redflare"))
 	local Pos = self:GetPos()
 	local EyeNormal = (EyePos() -Pos):GetNormal()
-	EyeNormal:Mul(self.Scale)	
+	EyeNormal:Mul(self.Scale)
 	EyeNormal.z = 0
 	local Rot = 180 +math.sin((self.SpawnTime +CurTime()) *2) *10
 	Pos = Pos +EyeAngles():Right() *math.cos((self.SpawnTime +CurTime()) *2) *4 *self.Scale

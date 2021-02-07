@@ -17,6 +17,7 @@ function ENT:Think()
 	util.Effect("zs_spawner",effectdata)
 	if self.CanDamage then
 		if self.MasterEntity.StartedOnslaught then
+			RunConsoleCommand("ai_clear_bad_links")
 			for _,v in pairs(player.GetAll()) do
 				v.NextZSDMGT = v.NextZSDMGT or CurTime()
 				if v.VJ_ZS_IsZombie then return end

@@ -181,13 +181,32 @@ function ENT:Initialize()
 		end
 	end
 	self.tbl_Spawners = {}
+	self.HasIndicators = false
+	self.CurrentIndicator = NULL
+	self.CurrentIndicatorIndex = 0
+	self.tbl_Indicators = {}
+	self.IndicatorWaves = {}
 	self.DefaultSpawnPositions = {}
 	for _,v in pairs(ents.FindByClass("sent_vj_zs_spawner")) do
 		table.insert(self.tbl_Spawners,v)
 		table.insert(self.DefaultSpawnPositions,v:GetPos())
 		v.MasterEntity = self
 	end
+	-- for _,v in pairs(ents.FindByClass("sent_vj_zs_point")) do
+		-- table.insert(self.tbl_Indicators,v)
+		-- Entity(1):ChatPrint("Found indicator")
+		-- v.MasterEntity = self
+	-- end
 	if #self.DefaultSpawnPositions < 1 then self:Remove() end
+	-- local indicators = #self.tbl_Indicators
+	-- if indicators > 0 then
+		-- self.HasIndicators = true
+		-- iWaves = math.Round(indicators /8)
+		-- for i = 8,1,-iWaves do
+			-- Entity(1):ChatPrint("Added ind. wave " .. tostring(i))
+			-- table.insert(self.IndicatorWaves,i)
+		-- end
+	-- end
 	for _,v in pairs(player.GetAll()) do
 		v:SetNWBool("ZS_HUD",true)
 		v.ZS_Kills = 0
@@ -723,6 +742,21 @@ function ENT:SetWave(num)
 		end)
 	end
 	self.Wave = num
+	if self.HasIndicators then
+		local changeTo = false
+		for _,v in pairs(self.IndicatorWaves) do
+			if v == num then
+				changeTo = v
+				Entity(1):ChatPrint("Found indicator " .. tostring(num))
+			end
+		end
+		if changeTo then
+			Entity(1):ChatPrint("Updated indicator")
+			SafeRemoveEntity(self.CurrentIndicator)
+			self.CurrentIndicator = self.tbl_Indicators[self.CurrentIndicatorIndex +1]
+			self.CurrentIndicator:OnActivated()
+		end
+	end
 	for _,v in pairs(player.GetAll()) do
 		if v:Alive() && !v.VJ_ZS_IsZombie then
 			self:ObtainWaveWeapon(v,num)

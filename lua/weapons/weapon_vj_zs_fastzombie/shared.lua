@@ -64,53 +64,47 @@ function SWEP:Reload()
 	end
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
-function SWEP:ZS_Animations(vel,maxSeqGroundSpeed)
-	local animIdle = ACT_IDLE
-	local animMove = ACT_RUN
-	local animAttack = ACT_MELEE_ATTACK1
-
-	local ply = self.Owner
-	local keys = {w=ply:KeyDown(IN_FORWARD),a=ply:KeyDown(IN_MOVELEFT),s=ply:KeyDown(IN_BACK),d=ply:KeyDown(IN_MOVERIGHT),lmb=ply:KeyDown(IN_ATTACK),rmb=ply:KeyDown(IN_ATTACK2)}
-	local data = {}
-	local act = animIdle
-	local ppx = 0
-	local ppy = 0
-	local noPresses = false
-	if (!keys.w && !keys.a && !keys.s && !keys.d && !keys.lmb && !keys.rmb) then
-		act = animIdle
-	else
-		if lmb then
-			act = animAttack
-		elseif keys.w or keys.a or keys.s or keys.d then
-			act = animMove
+function SWEP:VJ_TranslateActivities()
+	local idle = ACT_IDLE
+	local walk = ACT_RUN
+	local run = ACT_RUN
+	local attack = ACT_MELEE_ATTACK1
+	self.ActivityTranslate = {}
+	self.ActivityTranslate[ACT_MP_STAND_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_WALK]							= walk
+	self.ActivityTranslate[ACT_MP_RUN]							= run
+	self.ActivityTranslate[ACT_MP_CROUCH_IDLE]					= idle
+	self.ActivityTranslate[ACT_MP_CROUCHWALK]					= walk
+	self.ActivityTranslate[ACT_MP_ATTACK_STAND_PRIMARYFIRE]		= attack
+	self.ActivityTranslate[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE]	= attack
+	self.ActivityTranslate[ACT_MP_JUMP]							= ACT_JUMP
+	self.ActivityTranslate[ACT_RANGE_ATTACK1]					= attack
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:TranslateActivity(act)
+	if self.ActivityTranslate[act] != nil then
+		local doingClimb = (act == ACT_MP_WALK or act == ACT_MP_RUN or act == ACT_MP_CROUCHWALK or act == ACT_MP_JUMP)
+		if self:GetNW2Float("Climb") > CurTime() && doingClimb then
+			return ACT_CLIMB_UP
 		end
+		return self.ActivityTranslate[act]
 	end
-
-	if keys.w then
-		ppy = 1
-	elseif keys.a then
-		ppx = -1
-	elseif keys.s then
-		ppy = -1
-	elseif keys.d then
-		ppx = 1
-	else
-		ppx = 0
-		ppy = 0
-	end
-
-	data.sequence = act
-	data.movex = ppx
-	data.movey = ppy
-	return data
+	return -1
+end
+---------------------------------------------------------------------------------------------------------------------------------------------
+function SWEP:CustomOnInitialize()
+	timer.Simple(0,function() self:VJ_TranslateActivities() end)
+	self:SetNW2Float("Climb",0)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 function SWEP:Climb()
 	local tr = self.Owner:GetEyeTrace()
 	self.Owner:SetGroundEntity(NULL)
+	self.Owner:SetAnimation(PLAYER_WALK)
 	-- self.Owner:SetVelocity(self.Owner:GetUp() *250)
 	self.Owner:SetVelocity(Vector(0,0,4) +(tr && tr.Hit && tr.HitNormal:Angle():Up()) *250)
 	self.Owner:EmitSound("player/footsteps/metalgrate" .. math.random(1,4) .. ".wav",65,100)
+	self:SetNW2Float("Climb",CurTime() +0.6)
 end
 ---------------------------------------------------------------------------------------------------------------------------------------------
 SWEP.NextRangeT = CurTime()
